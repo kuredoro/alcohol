@@ -12,7 +12,12 @@ project(alcohol VERSION 0.1.0 LANGUAGES CXX)
 ############### LLVM setup ###############
 
 # LLVM_DIR must be set to the prefix of /share/llvm/cmake via commandline
-find_package(LLVM REQUIRED CONFIG)
+if(LLVM_HINT)
+    find_package(LLVM REQUIRED CONFIG HINTS "${LLVM_HINT}")
+else()
+    message("\n-DLLVM_HINT not set. Will use system-wide installation. Set LLVM_HINT where /share/llvm/cmake can be accessed, if you want a specific version.\n")
+    find_package(LLVM REQUIRED CONFIG)
+endif()
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
