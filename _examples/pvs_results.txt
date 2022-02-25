@@ -1,0 +1,30 @@
+empty.c: no nullptr checks
+big_arrays.c: no nullptr checks
+
+condition_overwrite.c:
+condition_overwrite2.c:
+
+direct_double_free.c: no nullptr check, double free
+    <source>:7:1: warning: V522 There might be dereferencing of a potential null pointer 'x'. Check lines: 7, 6.
+    <source>:11:1: error: V586 The 'free' function is called twice for deallocation of the same memory space. Inspect the first argument. Check lines: 10, 11.
+
+free_unallocated.c:
+    <source>:6:1: error: V575 The null pointer is passed into 'free' function. Inspect the first argument.
+
+indirect_double_free.c:
+
+overwrite.c:
+    <source>:12:1: note: V773 The 'x' pointer was assigned values twice without releasing the memory. A memory leak is possible.
+
+overwrite_remembered.c: no warnings, okay!
+
+overwrite_remembered_partial.c:
+    <source>:16:5: warning: 'free' called on pointer 'x' with nonzero offset 4 [-Wfree-nonheap-object]
+       16 |     free(y);
+          |     ^~~~~~~
+    <source>:6:15: note: returned from 'malloc'
+        6 |     x = (int*)malloc(2 * sizeof(int));
+          |               ^~~~~~~~~~~~~~~~~~~~~~~
+
+while_unallocated.c:
+    <source>:12:1: note: V773 The 'x' pointer was assigned values twice without releasing the memory. A memory leak is possible.

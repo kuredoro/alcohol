@@ -10,18 +10,18 @@ int main()
     int* x = (int*)malloc(4 * sizeof(int));
     if (!x) return 0;
 
-    int* y = NULL;
+    int* y = (int*)malloc(4 * sizeof(int));
     if (dummy == 0)
     {
+        // y is forgotten
         y = x + 1;
     }
     else
     {
+        // y is forgotten
         y = x + 2;
     }
 
-    // x and x+1 are forgotten
-    // (...Not really...)
     x = NULL;
 
     // Bad free
