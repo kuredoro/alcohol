@@ -50,7 +50,11 @@ if(NOT LLVM_ENABLE_RTTI)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 endif()
 
-add_library(alcohol SHARED FindAlcaSubset.cpp)
+add_library(alcohol SHARED
+    src/AlcoholPluginAction.hpp
+    src/AlcoholPluginAction.cpp
+    src/Main.cpp
+)
 
 # Allow undefined symbols in shared objects on Darwin (this is the default
 # behaviour on Linux)
