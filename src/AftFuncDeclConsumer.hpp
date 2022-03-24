@@ -20,11 +20,55 @@
 using namespace clang;
 using namespace ast_matchers;
 
+struct MatchMemoryAllocationCallback : public MatchFinder::MatchCallback
+{
+    void run(const MatchFinder::MatchResult& result) override
+    {
+        llvm::outs() << "Memory alloc!\n";
+    }
+};
+
+struct MatchPointerMutationCallback : public MatchFinder::MatchCallback
+{
+    void run(const MatchFinder::MatchResult& result) override;
+};
+
+struct MatchMemoryDeallocationCallback : public MatchFinder::MatchCallback
+{
+    void run(const MatchFinder::MatchResult& result) override
+    {
+        llvm::outs() << "Memory free!\n";
+    }
+};
+
 struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor>
 {
   explicit AftFuncDeclVisitor(const clang::ASTContext* ctx) : m_ctx(ctx), m_sm(ctx->getSourceManager())
   {
     m_matcher = std::make_unique<MatchFinder>();  
+
+    m_allocCb = std::make_unique<MatchMemoryAllocationCallback>();
+    auto allocPattern =
+        declStmt(
+            hasSingleDecl(varDecl(
+                hasDescendant(callExpr(
+                    hasDeclaration(functionDecl(
+                        hasName("malloc")
+                    ))
+                ))
+            ))
+        );
+
+    m_deallocCb = std::make_unique<MatchMemoryDeallocationCallback>();
+    auto deallocPattern =
+        callExpr(
+            hasDeclaration(functionDecl(
+                hasName("free")
+            ))
+        );
+
+    m_matcher->addMatcher(allocPattern, m_allocCb.get());
+    m_matcher->addMatcher(deallocPattern, m_deallocCb.get());
   }
 
   bool TraverseFunctionDecl(const clang::FunctionDecl* funcDecl)
@@ -59,3 +103,10 @@ private:
   const ASTContext* m_ctx;
   const SourceManager& m_sm;
 };
+
+/*
+void MatchMemoryAllocationCallback::run(const MatchFinder::MatchResult& result)
+{
+    llvm::outs() << "Memory alloc!\n";
+}
+*/
