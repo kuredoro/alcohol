@@ -20,7 +20,10 @@ struct expression
         return false;
     }
 
-    virtual std::string to_string() const = 0;
+    virtual std::string to_string() const
+    {
+        return "<unknow expression>";
+    }
 
     virtual ~expression() = default;
 };

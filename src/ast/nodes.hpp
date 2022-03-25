@@ -46,34 +46,36 @@ struct nop final : public statement
 
 struct decl final : public statement
 {
-    decl(const std::string& varName, expression expr) :
-        varName_(varName), expr_(expr)
+    template <class Expression>
+    decl(const std::string& varName, Expression&& expr) :
+        varName_(varName), expr_(std::make_unique<Expression>(std::move(expr)))
     {}
 
     std::string to_string() const override
     {
-        return "let " + varName_ + " := " + expr_.to_string() + "\n";
+        return "let " + varName_ + " := " + expr_->to_string() + "\n";
     }
 
 private:
     std::string varName_;
-    expression expr_;
+    std::unique_ptr<expression> expr_;
 };
 
 struct assign final : public statement
 {
-    assign(const std::string& varName, expression expr) :
-        varName_(varName), expr_(expr)
+    template <class Expression>
+    assign(const std::string& varName, Expression&& expr) :
+        varName_(varName), expr_(std::make_unique<Expression>(std::move(expr)))
     {}
 
     std::string to_string() const override
     {
-        return varName_ + " := " + expr_.to_string() + "\n";
+        return varName_ + " := " + expr_->to_string() + "\n";
     }
 
 private:
     std::string varName_;
-    expression expr_;
+    std::unique_ptr<expression> expr_;
 };
 
 struct alloc final : public statement
@@ -94,17 +96,19 @@ private:
 
 struct store final : public statement
 {
-    store(const std::string& toVar, const std::string& fromVar) :
-        toVar_(toVar), fromVar_(fromVar)
+    template <class Expression>
+    store(const std::string& toVar, Expression&& value) :
+        toVar_(toVar), value_(std::make_unique<Expression>(std::move(value)))
     {}
 
     std::string to_string() const override
     {
-        return "*" + toVar_ + " := " + fromVar_ + "\n";
+        return "*" + toVar_ + " := " + value_->to_string() + "\n";
     }
 
 private:
-    std::string toVar_, fromVar_;
+    std::string toVar_;
+    std::unique_ptr<expression> value_;
 };
 
 struct load final : public statement
