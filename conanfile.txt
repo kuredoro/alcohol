@@ -1,0 +1,5 @@
+[requires]
+gsl-lite/0.40.0
+
+[generators]
+cmake

@@ -1,15 +1,41 @@
 cmake_minimum_required(VERSION 3.20)
 project(alcohol VERSION 0.1.0 LANGUAGES CXX)
 
-# if(NOT LLVM_DIR)
-#     set(msg "Please set the LLVM_DIR variable to the prefix of /share/llvm/cmake.")
-#     if(UNIX)
-#         set(msg "${msg}\nIf you want to use the system-wide installation of LLVM and Clang, use -DLLVM_DIR=/usr")
-#     endif()
-#     message(FATAL_ERROR ${msg})
-# endif()
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-############### LLVM setup ###############
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup(TARGETS)
+
+##
+## Defining libraries
+##
+
+add_library(linter
+    src/ast.hpp
+    src/ast.cpp)
+target_compile_features(linter PUBLIC cxx_std_20)
+target_include_directories(linter PUBLIC src/)
+target_link_libraries(linter PUBLIC CONAN_PKG::gsl-lite)
+
+##
+## Tests
+##
+
+add_executable(linter_test
+    src/boost/ut.hpp
+    src/linter.test.cpp)
+target_include_directories(linter_test PRIVATE src/)
+target_link_libraries(linter_test PRIVATE linter)
+
+# MSVC is bogus with modules right now...
+if (MSVC)
+    target_compile_definitions(linter_test PRIVATE BOOST_UT_DISABLE_MODULE)
+endif()
+
+## 
+## LLVM setup
+##
 
 # LLVM_DIR must be set to the prefix of /share/llvm/cmake via commandline
 if(LLVM_HINT)
