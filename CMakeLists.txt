@@ -16,7 +16,7 @@ add_library(linter
     src/ast.cpp)
 target_compile_features(linter PUBLIC cxx_std_20)
 target_include_directories(linter PUBLIC src/)
-target_link_libraries(linter PUBLIC CONAN_PKG::gsl-lite)
+target_link_libraries(linter PUBLIC CONAN_PKG::gsl-lite CONAN_PKG::boost)
 
 ##
 ## Tests
