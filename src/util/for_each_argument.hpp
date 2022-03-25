@@ -3,22 +3,11 @@
 #include <boost/mp11/integral.hpp>
 #include <boost/mp11/detail/mp_plus.hpp>
 #include <utility>
-#include <memory>
-#include <string>
 
 namespace util
 {
 
 using namespace boost::mp11;
-
-
-std::string indent_text(const std::string& text);
-
-template <class T, class... Args>
-auto make_unique_from_ref(Args&&... args)
-{
-    return std::make_unique<std::remove_reference_t<T>>(std::forward<Args>(args)...);
-}
 
 namespace detail
 {

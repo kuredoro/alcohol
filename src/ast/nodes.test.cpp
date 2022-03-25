@@ -1,4 +1,4 @@
-#include "ast.hpp"
+#include <ast/nodes.hpp>
 #include <iostream>
 
 int main()

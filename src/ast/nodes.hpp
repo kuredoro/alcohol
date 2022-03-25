@@ -9,8 +9,10 @@
 #include <gsl/gsl-lite.hpp>
 #include <boost/mp11.hpp>
 
-#include <util.hpp>
-#include <expression.hpp>
+#include <util/make_unique_from_ref.hpp>
+#include <util/for_each_argument.hpp>
+#include <util/indent_text.hpp>
+#include <ast/expression.hpp>
 
 namespace ast
 {

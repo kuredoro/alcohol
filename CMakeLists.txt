@@ -11,29 +11,36 @@ conan_basic_setup(TARGETS)
 ## Defining libraries
 ##
 
-add_library(linter
-    src/ast.hpp
-    src/ast.cpp
-    src/expression.hpp
-    src/util.hpp
-    src/util.cpp)
-target_compile_features(linter PUBLIC cxx_std_20)
-target_include_directories(linter PUBLIC src/)
-target_link_libraries(linter PUBLIC CONAN_PKG::gsl-lite CONAN_PKG::boost)
+add_library(util STATIC
+    src/util/for_each_argument.hpp
+    src/util/make_unique_from_ref.hpp
+    src/util/indent_text.hpp
+    src/util/indent_text.cpp)
+target_compile_features(util PUBLIC cxx_std_17)
+target_include_directories(util PUBLIC src)
+target_link_libraries(util PUBLIC CONAN_PKG::boost)
+
+add_library(ast STATIC
+    src/ast/nodes.hpp
+    src/ast/nodes.cpp
+    src/ast/expression.hpp)
+target_compile_features(ast PUBLIC cxx_std_17)
+target_include_directories(ast PUBLIC src)
+target_link_libraries(ast PUBLIC util CONAN_PKG::gsl-lite CONAN_PKG::boost)
 
 ##
 ## Tests
 ##
 
-add_executable(linter_test
+add_executable(nodes_test
     src/boost/ut.hpp
-    src/linter.test.cpp)
-target_include_directories(linter_test PRIVATE src/)
-target_link_libraries(linter_test PRIVATE linter)
+    src/ast/nodes.test.cpp)
+target_include_directories(nodes_test PRIVATE src/)
+target_link_libraries(nodes_test PRIVATE ast)
 
 # MSVC is bogus with modules right now...
 if (MSVC)
-    target_compile_definitions(linter_test PRIVATE BOOST_UT_DISABLE_MODULE)
+    target_compile_definitions(nodes_test PRIVATE BOOST_UT_DISABLE_MODULE)
 endif()
 
 ## 
@@ -80,9 +87,9 @@ if(NOT LLVM_ENABLE_RTTI)
 endif()
 
 add_library(alcohol SHARED
-    src/AlcoholPluginAction.hpp
-    src/AlcoholPluginAction.cpp
-    src/Main.cpp
+    src/plugin/AlcoholPluginAction.hpp
+    src/plugin/AlcoholPluginAction.cpp
+    src/plugin/Main.cpp
 )
 
 # Allow undefined symbols in shared objects on Darwin (this is the default
