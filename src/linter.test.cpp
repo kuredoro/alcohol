@@ -5,10 +5,15 @@ int main()
 {
     auto hello =
         ast::block(
-            ast::nop(),
+            ast::decl("foo", 42),
+            ast::alloc("array", 2),
+            ast::decl("initPtr", 0),
+            ast::store("initPtr", "aiaiai"),
+            ast::assign("initPtr", 1),
+            ast::store("initPtr", "aiaia"),
             ast::while_loop(
                 ast::block(
-                    ast::nop(),
+                    ast::assign("oi", 42),
                     ast::if_else(
                         ast::nop(),
                         ast::nop()

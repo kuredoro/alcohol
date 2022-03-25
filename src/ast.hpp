@@ -39,6 +39,101 @@ struct nop final : public statement
     }
 };
 
+using expression = size_t;
+
+struct decl final : public statement
+{
+    decl(const std::string& varName, expression expr) :
+        varName_(varName), expr_(expr)
+    {}
+
+    std::string to_string() const override
+    {
+        return "let " + varName_ + " := " + std::to_string(expr_) + "\n";
+    }
+
+private:
+    std::string varName_;
+    expression expr_;
+};
+
+struct assign final : public statement
+{
+    assign(const std::string& varName, expression expr) :
+        varName_(varName), expr_(expr)
+    {}
+
+    std::string to_string() const override
+    {
+        return varName_ + " := " + std::to_string(expr_) + "\n";
+    }
+
+private:
+    std::string varName_;
+    expression expr_;
+};
+
+struct alloc final : public statement
+{
+    alloc(const std::string& varName, size_t size) :
+        varName_(varName), allocSize_(size)
+    {}
+
+    std::string to_string() const override
+    {
+        return "let " + varName_ + " := alloc(" + std::to_string(allocSize_) + ")\n";
+    }
+
+private:
+    std::string varName_;
+    size_t allocSize_;
+};
+
+struct store final : public statement
+{
+    store(const std::string& toVar, const std::string& fromVar) :
+        toVar_(toVar), fromVar_(fromVar)
+    {}
+
+    std::string to_string() const override
+    {
+        return "*" + toVar_ + " := " + fromVar_ + "\n";
+    }
+
+private:
+    std::string toVar_, fromVar_;
+};
+
+struct load final : public statement
+{
+    load(const std::string& toVar, const std::string& fromVar) :
+        toVar_(toVar), fromVar_(fromVar)
+    {}
+
+    std::string to_string() const override
+    {
+        return toVar_ + " := *" + fromVar_ + "\n";
+    }
+
+private:
+    std::string toVar_, fromVar_;
+};
+
+struct dispose final : public statement
+{
+    explicit dispose(const std::string& varName) :
+        varName_(varName)
+    {}
+
+    std::string to_string() const override
+    {
+        return "dispose "+ varName_ + "\n";
+    }
+
+private:
+    std::string varName_;
+};
+
 struct block final : public statement
 {
     template <class... Statements,
