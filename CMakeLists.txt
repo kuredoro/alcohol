@@ -23,7 +23,7 @@ target_link_libraries(util PUBLIC CONAN_PKG::boost)
 add_library(ast STATIC
     src/ast/nodes.hpp
     src/ast/nodes.cpp
-    src/ast/expression.hpp)
+    src/ast/expressions.hpp)
 target_compile_features(ast PUBLIC cxx_std_17)
 target_include_directories(ast PUBLIC src)
 target_link_libraries(ast PUBLIC util CONAN_PKG::gsl-lite CONAN_PKG::boost)
@@ -38,11 +38,11 @@ add_executable(nodes_test
 target_include_directories(nodes_test PRIVATE src/)
 target_link_libraries(nodes_test PRIVATE ast)
 
-add_executable(expression_test
+add_executable(expressions_test
     src/boost/ut.hpp
-    src/ast/expression.test.cpp)
-target_include_directories(expression_test PRIVATE src/)
-target_link_libraries(expression_test PRIVATE ast)
+    src/ast/expressions.test.cpp)
+target_include_directories(expressions_test PRIVATE src/)
+target_link_libraries(expressions_test PRIVATE ast)
 
 # MSVC is bogus with modules right now...
 if (MSVC)

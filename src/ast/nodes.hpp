@@ -12,7 +12,7 @@
 #include <util/make_unique_from_ref.hpp>
 #include <util/for_each_argument.hpp>
 #include <util/indent_text.hpp>
-#include <ast/expression.hpp>
+#include <ast/expressions.hpp>
 
 namespace ast
 {
