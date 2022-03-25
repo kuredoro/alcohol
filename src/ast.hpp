@@ -117,15 +117,17 @@ private:
 
 struct while_loop final : public statement
 {
-    template <class Statement,
-             bool = std::is_base_of<statement, std::remove_pointer_t<Statement>>::value
+    template <class Body,
+             bool BodyIsStatement = std::is_base_of<statement, std::remove_pointer_t<Body>>::value
     >
-    explicit while_loop(Statement&& body)
-        : body_(std::forward<Statement>(body))
-    {}
+    explicit while_loop(Body&& body)
+        : body_(std::make_unique<Body>(std::forward<Body>(body)))
+    {
+        static_assert(BodyIsStatement, "the while loop body must be a statement");
+    }
 
 private:
-    statement body_;
+    std::unique_ptr<statement> body_;
 };
 
 }
