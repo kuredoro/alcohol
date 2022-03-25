@@ -96,19 +96,20 @@ private:
 
 struct store final : public statement
 {
-    template <class Expression>
-    store(const std::string& toVar, Expression&& value) :
-        toVar_(toVar), value_(std::make_unique<Expression>(std::move(value)))
+    // TODO: expr base check
+    template <class LHS, class RHS>
+    store(LHS&& address, RHS&& value) :
+        destination_(std::make_unique<LHS>(std::forward<LHS>(address))),
+        value_(std::make_unique<RHS>(std::forward<RHS>(value)))
     {}
 
     std::string to_string() const override
     {
-        return "*" + toVar_ + " := " + value_->to_string() + "\n";
+        return "*" + destination_->to_string() + " := " + value_->to_string() + "\n";
     }
 
 private:
-    std::string toVar_;
-    std::unique_ptr<expression> value_;
+    std::unique_ptr<expression> destination_, value_;
 };
 
 struct load final : public statement
