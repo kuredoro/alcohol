@@ -63,7 +63,7 @@ struct block final : public statement
         std::string result = "begin\n";
         for (auto& stmt : statements_)
         {
-            result += stmt->to_string();
+            result += util::indent_text(stmt->to_string());
         }
         
         return result + "end\n";
@@ -99,14 +99,14 @@ struct if_else final : public statement
 
     std::string to_string() const
     {
-        std::string result = "if ... begin\n";
+        std::string result = "if ...\n";
         if (trueBranch_)
-            result += trueBranch_->to_string();
+            result += util::indent_text(trueBranch_->to_string());
 
         if (falseBranch_)
-            result += "else\n" + falseBranch_->to_string();
+            result += "else\n" + util::indent_text(falseBranch_->to_string());
 
-        result += "end\n";
+        result += "end_if\n";
 
         return result;
     }
@@ -124,6 +124,13 @@ struct while_loop final : public statement
         : body_(std::make_unique<Body>(std::forward<Body>(body)))
     {
         static_assert(BodyIsStatement, "the while loop body must be a statement");
+    }
+
+    std::string to_string() const
+    {
+        std::string result = "while ...\n";
+        result += util::indent_text(body_->to_string());
+        return result + "end_while\n";
     }
 
 private:

@@ -13,7 +13,9 @@ conan_basic_setup(TARGETS)
 
 add_library(linter
     src/ast.hpp
-    src/ast.cpp)
+    src/ast.cpp
+    src/util.hpp
+    src/util.cpp)
 target_compile_features(linter PUBLIC cxx_std_20)
 target_include_directories(linter PUBLIC src/)
 target_link_libraries(linter PUBLIC CONAN_PKG::gsl-lite CONAN_PKG::boost)
