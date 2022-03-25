@@ -7,10 +7,29 @@
 namespace ast
 {
 
-struct statement {};
-struct nop final : public statement {};
+struct statement
+{
+    statement() = default;
+    statement(statement&&) = default;
+    statement& operator=(statement&&) = default;
 
-struct block : public statement
+    statement(const statement&) = delete;
+    statement& operator=(const statement&) = delete;
+
+    virtual std::string to_string() const
+    {
+        return "<unknown statement>\n";
+    };
+};
+
+struct nop final : public statement 
+{
+    std::string to_string() const override
+    {
+        return "nop\n";
+    }
+};
+
 {
     template <class... Statements,
              bool ArgumentsAreStatements = (std::is_base_of<statement, std::remove_pointer_t<Statements>>::value && ...)

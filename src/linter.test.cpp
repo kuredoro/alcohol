@@ -1,4 +1,5 @@
 #include "ast.hpp"
+#include <iostream>
 
 int main()
 {
@@ -6,10 +7,12 @@ int main()
         ast::block(
             ast::nop(),
             ast::if_else(
+                ast::nop(),
                 ast::nop()
-            ),
-            1
+            )
         );
+
+    std::cout << hello.to_string();
 
     return 0;
 }
