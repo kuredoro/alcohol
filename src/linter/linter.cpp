@@ -11,9 +11,10 @@ using namespace boost::mp11;
 namespace linter
 {
 
-
-void linter::process(ast::statement& statement)
+void address_var_collector::process(ast::statement& statement)
 {
+    std::cout << "<unknown statement>\n";
+    /*
     const auto& type = typeid(statement);
 
     // TODO: check if assembly is optimal...
@@ -28,38 +29,54 @@ void linter::process(ast::statement& statement)
     });
 
     // XXX: if none of the types above match, we get silence, no warnings...
+    */
 }
 
-void linter::process(ast::block& block)
+void address_var_collector::process(ast::block& block)
 {
     std::cout << "processing block\n";
 
     for (auto& statement : block.statements())
     {
-        process(*statement.get());
+        statement->accept(*this);
     }
 
     std::cout << "done processing block\n";
 }
 
-void linter::process(ast::decl& decl)
+void address_var_collector::process(ast::decl& decl)
 {
     std::cout << "processing decl\n";
 }
 
-void linter::process(ast::alloc& alloc)
+void address_var_collector::process(ast::alloc& alloc)
 {
     std::cout << "processing alloc\n";
 }
 
-void linter::process(ast::store& store)
+void address_var_collector::process(ast::store& store)
 {
     std::cout << "processing store\n";
 }
 
-void linter::process(ast::dispose& store)
+void address_var_collector::process(ast::dispose& dispose)
 {
     std::cout << "processing dispose\n";
+}
+
+void address_var_collector::process(ast::load& load)
+{
+    std::cout << "processing load\n";
+}
+
+void address_var_collector::process(ast::if_else& ifElse)
+{
+    std::cout << "processing if_else\n";
+}
+
+void address_var_collector::process(ast::while_loop& whileLoop)
+{
+    std::cout << "processing while_loop\n";
 }
 
 }

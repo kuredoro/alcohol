@@ -19,6 +19,8 @@ namespace ast
 
 using namespace boost::mp11;
 
+struct statement_visitor;
+
 struct statement
 {
     statement() = default;
@@ -33,10 +35,18 @@ struct statement
         return "<unknown statement>\n";
     };
 
+    virtual void accept(statement_visitor&);
+
     virtual ~statement() = default;
 };
 
-struct nop final : public statement 
+template <class X, class SubType = statement>
+struct visitable_statement : public SubType
+{
+    virtual void accept(statement_visitor& visitor);
+};
+
+struct nop final : public visitable_statement<nop>
 {
     std::string to_string() const override
     {
@@ -44,7 +54,7 @@ struct nop final : public statement
     }
 };
 
-struct decl final : public statement
+struct decl final : public visitable_statement<decl>
 {
     template <class Expression>
     decl(const std::string& varName, Expression&& expr) :
@@ -61,7 +71,7 @@ private:
     std::unique_ptr<expression> expr_;
 };
 
-struct assign final : public statement
+struct assign final : public visitable_statement<assign>
 {
     template <class Expression>
     assign(const std::string& varName, Expression&& expr) :
@@ -78,7 +88,7 @@ private:
     std::unique_ptr<expression> expr_;
 };
 
-struct alloc final : public statement
+struct alloc final : public visitable_statement<alloc>
 {
     alloc(const std::string& varName, size_t size) :
         varName_(varName), allocSize_(size)
@@ -94,7 +104,7 @@ private:
     size_t allocSize_;
 };
 
-struct store final : public statement
+struct store final : public visitable_statement<store>
 {
     // TODO: expr base check
     template <class LHS, class RHS>
@@ -112,7 +122,7 @@ private:
     std::unique_ptr<expression> destination_, value_;
 };
 
-struct load final : public statement
+struct load final : public visitable_statement<load>
 {
     load(const std::string& toVar, const std::string& fromVar) :
         toVar_(toVar), fromVar_(fromVar)
@@ -127,7 +137,7 @@ private:
     std::string toVar_, fromVar_;
 };
 
-struct dispose final : public statement
+struct dispose final : public visitable_statement<dispose>
 {
     explicit dispose(const std::string& varName) :
         varName_(varName)
@@ -142,7 +152,7 @@ private:
     std::string varName_;
 };
 
-struct block final : public statement
+struct block final : public visitable_statement<block>
 {
     template <class... Statements,
              bool ArgumentsAreStatements = (std::is_base_of<statement, std::remove_pointer_t<Statements>>::value && ...)
@@ -181,7 +191,7 @@ private:
     std::vector<std::unique_ptr<statement>> statements_;
 };
 
-struct if_else final : public statement
+struct if_else final : public visitable_statement<if_else>
 {
     template <class TrueBranch,
              bool TrueBranchIsStatement = std::is_base_of<statement, std::remove_pointer_t<TrueBranch>>::value
@@ -223,7 +233,7 @@ private:
     std::unique_ptr<statement> trueBranch_{}, falseBranch_{};
 };
 
-struct while_loop final : public statement
+struct while_loop final : public visitable_statement<while_loop>
 {
     template <class Body,
              bool BodyIsStatement = std::is_base_of<statement, std::remove_pointer_t<Body>>::value
@@ -244,5 +254,24 @@ struct while_loop final : public statement
 private:
     std::unique_ptr<statement> body_;
 };
+
+struct statement_visitor
+{
+    virtual void process(statement&) = 0;
+    virtual void process(block&) = 0;
+    virtual void process(decl&) = 0;
+    virtual void process(alloc&) = 0;
+    virtual void process(store&) = 0;
+    virtual void process(load&) = 0;
+    virtual void process(dispose&) = 0;
+    virtual void process(if_else&) = 0;
+    virtual void process(while_loop&) = 0;
+};
+
+template <class X, class SubType>
+void visitable_statement<X, SubType>::accept(statement_visitor& visitor)
+{
+    visitor.process(static_cast<X&>(*this));
+}
 
 }
