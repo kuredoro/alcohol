@@ -10,6 +10,12 @@ namespace util
 
 using namespace boost::mp11;
 
+template <class T, class... Args>
+auto make_unique_from_ref(Args&&... args)
+{
+    return std::make_unique<std::remove_reference_t<T>>(std::forward<Args>(args)...);
+}
+
 namespace detail
 {
 
