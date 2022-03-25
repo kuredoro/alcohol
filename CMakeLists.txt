@@ -28,6 +28,13 @@ target_compile_features(ast PUBLIC cxx_std_17)
 target_include_directories(ast PUBLIC src)
 target_link_libraries(ast PUBLIC util CONAN_PKG::gsl-lite CONAN_PKG::boost)
 
+add_library(linter STATIC
+    src/linter/linter.hpp
+    src/linter/linter.cpp)
+target_compile_features(linter PUBLIC cxx_std_20)
+target_include_directories(linter PUBLIC src)
+target_link_libraries(linter PUBLIC util CONAN_PKG::gsl-lite CONAN_PKG::boost)
+
 ##
 ## Tests
 ##
@@ -43,6 +50,12 @@ add_executable(expressions_test
     src/ast/expressions.test.cpp)
 target_include_directories(expressions_test PRIVATE src/)
 target_link_libraries(expressions_test PRIVATE ast)
+
+add_executable(linter_test
+    src/boost/ut.hpp
+    src/linter/linter.test.cpp)
+target_include_directories(linter_test PRIVATE src/)
+target_link_libraries(linter_test PRIVATE ast linter)
 
 # MSVC is bogus with modules right now...
 if (MSVC)

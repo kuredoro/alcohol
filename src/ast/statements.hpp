@@ -172,6 +172,11 @@ struct block final : public statement
         return result + "end\n";
     }
 
+    gsl::span<const std::unique_ptr<statement>> statements() const
+    {
+        return gsl::make_span(statements_);
+    }
+
 private:
     std::vector<std::unique_ptr<statement>> statements_;
 };
