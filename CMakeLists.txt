@@ -38,9 +38,16 @@ add_executable(nodes_test
 target_include_directories(nodes_test PRIVATE src/)
 target_link_libraries(nodes_test PRIVATE ast)
 
+add_executable(expression_test
+    src/boost/ut.hpp
+    src/ast/expression.test.cpp)
+target_include_directories(expression_test PRIVATE src/)
+target_link_libraries(expression_test PRIVATE ast)
+
 # MSVC is bogus with modules right now...
 if (MSVC)
     target_compile_definitions(nodes_test PRIVATE BOOST_UT_DISABLE_MODULE)
+    target_compile_definitions(expression_test PRIVATE BOOST_UT_DISABLE_MODULE)
 endif()
 
 ## 
