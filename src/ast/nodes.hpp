@@ -32,6 +32,8 @@ struct statement
     {
         return "<unknown statement>\n";
     };
+
+    virtual ~statement() = default;
 };
 
 struct nop final : public statement 

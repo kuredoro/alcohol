@@ -22,6 +22,7 @@ struct expression
 
     virtual std::string to_string() const = 0;
 
+    virtual ~expression() = default;
 };
 
 
