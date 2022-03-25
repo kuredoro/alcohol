@@ -14,6 +14,7 @@ conan_basic_setup(TARGETS)
 add_library(linter
     src/ast.hpp
     src/ast.cpp
+    src/expression.hpp
     src/util.hpp
     src/util.cpp)
 target_compile_features(linter PUBLIC cxx_std_20)

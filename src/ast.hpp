@@ -10,6 +10,7 @@
 #include <boost/mp11.hpp>
 
 #include <util.hpp>
+#include <expression.hpp>
 
 namespace ast
 {
@@ -39,8 +40,6 @@ struct nop final : public statement
     }
 };
 
-using expression = size_t;
-
 struct decl final : public statement
 {
     decl(const std::string& varName, expression expr) :
@@ -49,7 +48,7 @@ struct decl final : public statement
 
     std::string to_string() const override
     {
-        return "let " + varName_ + " := " + std::to_string(expr_) + "\n";
+        return "let " + varName_ + " := " + expr_.to_string() + "\n";
     }
 
 private:
@@ -65,7 +64,7 @@ struct assign final : public statement
 
     std::string to_string() const override
     {
-        return varName_ + " := " + std::to_string(expr_) + "\n";
+        return varName_ + " := " + expr_.to_string() + "\n";
     }
 
 private:
