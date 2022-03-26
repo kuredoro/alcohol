@@ -3,6 +3,7 @@
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/integral.hpp>
 #include <memory>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 #include <utility>
@@ -91,16 +92,28 @@ private:
 struct alloc final : public visitable_statement<alloc>
 {
     alloc(const std::string& varName, size_t size) :
-        varName_(varName), allocSize_(size)
+        destVar_(varName), allocSize_(size)
     {}
 
     std::string to_string() const override
     {
-        return "let " + varName_ + " := alloc(" + std::to_string(allocSize_) + ")\n";
+        return "let " + destVar_.to_string() + " := alloc(" + std::to_string(allocSize_) + ")\n";
+    }
+
+    size_t alloc_size() const
+    {
+        return allocSize_;
+    }
+
+    // TODO: std::string seems not optimal, is there copy elission, I'm pretty sure,
+    // but gotta check...
+    var* destination_var()
+    {
+        return &destVar_;
     }
 
 private:
-    std::string varName_;
+    var destVar_;
     size_t allocSize_;
 };
 
@@ -118,6 +131,11 @@ struct store final : public visitable_statement<store>
         return "*" + destination_->to_string() + " := " + value_->to_string() + "\n";
     }
 
+    expression* destination() const
+    {
+        return destination_.get();
+    }
+
 private:
     std::unique_ptr<expression> destination_, value_;
 };
@@ -130,26 +148,36 @@ struct load final : public visitable_statement<load>
 
     std::string to_string() const override
     {
-        return toVar_ + " := *" + fromVar_ + "\n";
+        return toVar_.to_string() + " := *" + fromVar_.to_string() + "\n";
+    }
+
+    var* source()
+    {
+        return &fromVar_;
     }
 
 private:
-    std::string toVar_, fromVar_;
+    var toVar_, fromVar_;
 };
 
 struct dispose final : public visitable_statement<dispose>
 {
     explicit dispose(const std::string& varName) :
-        varName_(varName)
+        targetVar_(varName)
     {}
 
     std::string to_string() const override
     {
-        return "dispose "+ varName_ + "\n";
+        return "dispose "+ targetVar_.to_string() + "\n";
+    }
+
+    var* target_var()
+    {
+        return &targetVar_;
     }
 
 private:
-    std::string varName_;
+    var targetVar_;
 };
 
 struct block final : public visitable_statement<block>

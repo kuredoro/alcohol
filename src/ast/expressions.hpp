@@ -40,6 +40,11 @@ struct var final : public expression
         return name_;
     }
 
+    std::string name() const
+    {
+        return name_;
+    }
+
 private:
     std::string name_;
 };
