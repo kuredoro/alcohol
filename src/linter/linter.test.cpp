@@ -24,16 +24,16 @@ int main()
 
     std::cout << "Program:\n" << empty.to_string() << "\n\nLinter:\n";
 
-    linter::linter vm;
+    linter::address_var_collector collector;
 
-    vm.process(empty);
+    collector.process(empty);
 
-    auto warnings = vm.warnings();
+    auto exprs = collector.address_expressions();
 
-    std::cout << "\n\nWarnings:\n";
-    for (auto& w : warnings)
+    std::cout << "\n\nAddress expressions:\n";
+    for (auto& expr : exprs)
     {
-        std::cout << w << '\n';
+        std::cout << expr->to_string() << '\n';
     }
 
     return 0;

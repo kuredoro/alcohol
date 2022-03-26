@@ -1,8 +1,10 @@
+#include "ast/expressions.hpp"
 #include "ast/statements.hpp"
 #include <linter/linter.hpp>
 #include <iostream>
 #include <typeinfo>
 #include <typeindex>
+#include <memory>
 
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/mpl_list.hpp>
@@ -51,22 +53,30 @@ void address_var_collector::process(ast::decl& decl)
 
 void address_var_collector::process(ast::alloc& alloc)
 {
-    std::cout << "processing alloc\n";
+    addrExprs_.push_back(alloc.destination_var());
+
+    for (size_t i = 1; i < alloc.alloc_size(); i++)
+    {
+        derivedExprs_.push_back(std::make_unique<ast::add>(ast::var(alloc.destination_var()->name()), ast::integer(i)));
+        addrExprs_.push_back(derivedExprs_.back().get());
+    }
 }
 
 void address_var_collector::process(ast::store& store)
 {
-    std::cout << "processing store\n";
-}
-
-void address_var_collector::process(ast::dispose& dispose)
-{
-    std::cout << "processing dispose\n";
+    addrExprs_.push_back(store.destination());
 }
 
 void address_var_collector::process(ast::load& load)
 {
-    std::cout << "processing load\n";
+    addrExprs_.push_back(load.source());
+}
+
+void address_var_collector::process(ast::dispose& dispose)
+{
+    addrExprs_.push_back(dispose.target_var());
+
+    std::cout << "processing dispose\n";
 }
 
 void address_var_collector::process(ast::if_else& ifElse)
