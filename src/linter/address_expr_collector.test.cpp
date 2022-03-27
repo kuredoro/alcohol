@@ -1,3 +1,4 @@
+#include "linter/address_expr_collector.hpp"
 #include <linter/linter.hpp>
 #include <ast/statements.hpp>
 #include <ast/expressions.hpp>
@@ -24,6 +25,17 @@ int main()
 
     std::cout << "Program:\n" << empty.to_string() << "\n\nLinter:\n";
 
+    linter::address_expr_collector collector;
+
+    collector.process(empty);
+
+    auto exprs = collector.address_expressions();
+
+    std::cout << "\n\nAddress expressions:\n";
+    for (auto& expr : exprs)
+    {
+        std::cout << expr->to_string() << '\n';
+    }
 
     return 0;
 }
