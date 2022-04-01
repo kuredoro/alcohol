@@ -2,11 +2,12 @@
 
 #include <string>
 #include <memory>
+#include <unordered_map>
 
 namespace ast
 {
 
-struct expression
+struct expression 
 {
     expression() = default;
     expression(expression&&) = default;
@@ -46,6 +47,7 @@ struct var final : public expression
     }
 
 private:
+    // TODO: replace with faster version
     std::string name_;
 };
 
@@ -101,6 +103,9 @@ struct multiply final : public expression
 private:
     std::unique_ptr<expression> left_, right_;
 };
+
+bool operator==(const expression& left, const expression& right);
+bool operator!=(const expression& left, const expression& right);
 
 expression& replace_variable(expression& expr, const std::string& var, const expression& withExpr);
 

@@ -23,7 +23,8 @@ target_link_libraries(util PUBLIC CONAN_PKG::boost)
 add_library(ast STATIC
     src/ast/statements.hpp
     src/ast/statements.cpp
-    src/ast/expressions.hpp)
+    src/ast/expressions.hpp
+    src/ast/expressions.cpp)
 target_compile_features(ast PUBLIC cxx_std_17)
 target_include_directories(ast PUBLIC src)
 target_link_libraries(ast PUBLIC util CONAN_PKG::gsl-lite CONAN_PKG::boost)
