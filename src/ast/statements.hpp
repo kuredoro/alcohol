@@ -14,32 +14,12 @@
 #include <util/for_each_argument.hpp>
 #include <util/indent_text.hpp>
 #include <ast/expressions.hpp>
+#include <ast/manager.hpp>
 
 namespace ast
 {
 
 using namespace boost::mp11;
-
-struct statement_visitor;
-
-struct statement
-{
-    statement() = default;
-    statement(statement&&) = default;
-    statement& operator=(statement&&) = default;
-
-    statement(const statement&) = delete;
-    statement& operator=(const statement&) = delete;
-
-    virtual std::string to_string() const
-    {
-        return "<unknown statement>\n";
-    };
-
-    virtual void accept(statement_visitor&);
-
-    virtual ~statement() = default;
-};
 
 template <class X, class SubType = statement>
 struct visitable_statement : public SubType
@@ -49,6 +29,9 @@ struct visitable_statement : public SubType
 
 struct nop final : public visitable_statement<nop>
 {
+    nop() = default;
+    explicit nop(manager&) {}
+
     std::string to_string() const override
     {
         return "nop\n";
@@ -58,8 +41,8 @@ struct nop final : public visitable_statement<nop>
 struct decl final : public visitable_statement<decl>
 {
     template <class Expression>
-    decl(const std::string& varName, Expression&& expr) :
-        varName_(varName), expr_(std::make_unique<Expression>(std::move(expr)))
+    decl(manager& store, const std::string& varName, Expression&& expr) :
+        varName_(varName), expr_(store.acquire_expression(std::forward<Expression>(expr)))
     {}
 
     std::string to_string() const override
@@ -69,14 +52,14 @@ struct decl final : public visitable_statement<decl>
 
 private:
     std::string varName_;
-    std::unique_ptr<expression> expr_;
+    expression* expr_;
 };
 
 struct assign final : public visitable_statement<assign>
 {
     template <class Expression>
-    assign(const std::string& varName, Expression&& expr) :
-        varName_(varName), expr_(std::make_unique<Expression>(std::move(expr)))
+    assign(manager& store, const std::string& varName, Expression&& expr) :
+        varName_(varName), expr_(store.acquire_expression(std::forward<Expression>(expr)))
     {}
 
     std::string to_string() const override
@@ -86,12 +69,12 @@ struct assign final : public visitable_statement<assign>
 
 private:
     std::string varName_;
-    std::unique_ptr<expression> expr_;
+    expression* expr_;
 };
 
 struct alloc final : public visitable_statement<alloc>
 {
-    alloc(const std::string& varName, size_t size) :
+    alloc(manager&, const std::string& varName, size_t size) :
         destVar_(varName), allocSize_(size)
     {}
 
@@ -105,8 +88,6 @@ struct alloc final : public visitable_statement<alloc>
         return allocSize_;
     }
 
-    // TODO: std::string seems not optimal, is there copy elission, I'm pretty sure,
-    // but gotta check...
     var* destination_var()
     {
         return &destVar_;
@@ -121,9 +102,9 @@ struct store final : public visitable_statement<store>
 {
     // TODO: expr base check
     template <class LHS, class RHS>
-    store(LHS&& address, RHS&& value) :
-        destination_(std::make_unique<LHS>(std::forward<LHS>(address))),
-        value_(std::make_unique<RHS>(std::forward<RHS>(value)))
+    store(manager& store, LHS&& address, RHS&& value) :
+        destination_(store.acquire_expression(std::forward<LHS>(address))),
+        value_(store.acquire_expression(std::forward<RHS>(value)))
     {}
 
     std::string to_string() const override
@@ -133,16 +114,17 @@ struct store final : public visitable_statement<store>
 
     expression* destination() const
     {
-        return destination_.get();
+        return destination_;
     }
 
 private:
-    std::unique_ptr<expression> destination_, value_;
+    expression* destination_;
+    expression* value_;
 };
 
 struct load final : public visitable_statement<load>
 {
-    load(const std::string& toVar, const std::string& fromVar) :
+    load(manager&, const std::string& toVar, const std::string& fromVar) :
         toVar_(toVar), fromVar_(fromVar)
     {}
 
@@ -162,7 +144,7 @@ private:
 
 struct dispose final : public visitable_statement<dispose>
 {
-    explicit dispose(const std::string& varName) :
+    explicit dispose(manager&, const std::string& varName) :
         targetVar_(varName)
     {}
 
@@ -185,15 +167,15 @@ struct block final : public visitable_statement<block>
     template <class... Statements,
              bool ArgumentsAreStatements = (std::is_base_of<statement, std::remove_pointer_t<Statements>>::value && ...)
     >
-    explicit block(Statements&&... statements)
+    explicit block(manager& store, Statements&&... statements)
     {
         static_assert(ArgumentsAreStatements, "The constructor arguments should be derived from ast::statement");
 
         statements_.resize(sizeof...(statements));
 
-        auto&& insert = [this](size_t i, auto&& stmt)
+        auto&& insert = [this, &store](size_t i, auto&& stmt)
         {
-            statements_[i] = util::make_unique_from_ref<decltype(stmt)>(std::forward<decltype(stmt)>(stmt));
+            statements_[i] = store.acquire_statement<std::remove_reference_t<decltype(stmt)>>(std::forward<decltype(stmt)>(stmt));
         };
 
         util::for_each_argument(insert, std::forward<Statements>(statements)...);
@@ -210,13 +192,13 @@ struct block final : public visitable_statement<block>
         return result + "end\n";
     }
 
-    gsl::span<const std::unique_ptr<statement>> statements() const
+    gsl::span<statement* const> statements() const
     {
         return gsl::make_span(statements_);
     }
 
 private:
-    std::vector<std::unique_ptr<statement>> statements_;
+    std::vector<statement*> statements_;
 };
 
 struct if_else final : public visitable_statement<if_else>
@@ -224,8 +206,8 @@ struct if_else final : public visitable_statement<if_else>
     template <class TrueBranch,
              bool TrueBranchIsStatement = std::is_base_of<statement, std::remove_pointer_t<TrueBranch>>::value
     >
-    explicit if_else(TrueBranch&& trueBranch) :
-        trueBranch_(std::make_unique<TrueBranch>(std::forward<TrueBranch>(trueBranch)))
+    if_else(manager& store, TrueBranch&& trueBranch) :
+        trueBranch_(store.acquire_statement(std::forward<TrueBranch>(trueBranch)))
     {
         static_assert(TrueBranchIsStatement, "the true branch must be a statement");
     }
@@ -235,9 +217,9 @@ struct if_else final : public visitable_statement<if_else>
              bool TrueBranchIsStatement = std::is_base_of<statement, std::remove_pointer_t<TrueBranch>>::value,
              bool FalseBranchIsStatement = std::is_base_of<statement, std::remove_pointer_t<FalseBranch>>::value
     >
-    if_else(TrueBranch&& trueBranch, FalseBranch&& falseBranch) :
-        trueBranch_(std::make_unique<TrueBranch>(std::forward<TrueBranch>(trueBranch))),
-        falseBranch_(std::make_unique<FalseBranch>(std::forward<FalseBranch>(falseBranch)))
+    if_else(manager& store, TrueBranch&& trueBranch, FalseBranch&& falseBranch) :
+        trueBranch_(store.acquire_statement(std::forward<TrueBranch>(trueBranch))),
+        falseBranch_(store.acquire_statement(std::forward<FalseBranch>(falseBranch)))
     {
         static_assert(TrueBranchIsStatement, "the true branch must be a statement");
         static_assert(FalseBranchIsStatement, "the false branch must be a statement");
@@ -258,7 +240,8 @@ struct if_else final : public visitable_statement<if_else>
     }
 
 private:
-    std::unique_ptr<statement> trueBranch_{}, falseBranch_{};
+    statement* trueBranch_{};
+    statement* falseBranch_{};
 };
 
 struct while_loop final : public visitable_statement<while_loop>
@@ -266,8 +249,8 @@ struct while_loop final : public visitable_statement<while_loop>
     template <class Body,
              bool BodyIsStatement = std::is_base_of<statement, std::remove_pointer_t<Body>>::value
     >
-    explicit while_loop(Body&& body)
-        : body_(std::make_unique<Body>(std::forward<Body>(body)))
+    while_loop(manager& store, Body&& body)
+        : body_(store.acquire_statement(std::forward<Body>(body)))
     {
         static_assert(BodyIsStatement, "the while loop body must be a statement");
     }
@@ -280,7 +263,7 @@ struct while_loop final : public visitable_statement<while_loop>
     }
 
 private:
-    std::unique_ptr<statement> body_;
+    statement* body_;
 };
 
 struct statement_visitor
