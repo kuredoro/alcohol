@@ -21,6 +21,8 @@ target_include_directories(util PUBLIC src)
 target_link_libraries(util PUBLIC CONAN_PKG::boost)
 
 add_library(ast STATIC
+    src/ast/manager.hpp
+    #src/ast/manager.cpp
     src/ast/statements.hpp
     src/ast/statements.cpp
     src/ast/expressions.hpp

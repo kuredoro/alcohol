@@ -1,34 +1,13 @@
 #pragma once
 
+#include <ast/manager.hpp>
+
 #include <string>
 #include <memory>
 #include <unordered_map>
 
 namespace ast
 {
-
-struct expression 
-{
-    expression() = default;
-    expression(expression&&) = default;
-    expression& operator=(expression&&) = default;
-
-    expression(const expression&) = delete;
-    expression& operator=(const expression&) = delete;
-
-    bool operator=(const expression& other) const
-    {
-        return false;
-    }
-
-    virtual std::string to_string() const
-    {
-        return "<unknow expression>";
-    }
-
-    virtual ~expression() = default;
-};
-
 
 struct var final : public expression
 {
