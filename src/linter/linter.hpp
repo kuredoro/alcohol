@@ -11,7 +11,9 @@ namespace linter
 
 struct linter
 {
-    linter() = default;
+    explicit linter(ast::manager& store) :
+        astStore_(store)
+    {}
 
     const std::vector<std::string>& warnings() const
     {
@@ -20,11 +22,12 @@ struct linter
 
     void process(ast::block& block)
     {
-        address_expr_collector collector;
+        address_expr_collector collector(astStore_);
         block.accept(collector);
     }
 
 private:
+    ast::manager& astStore_;
     std::vector<std::string> diagnostics_;
 };
 

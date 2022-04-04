@@ -2,6 +2,7 @@
 
 #include <ast/statements.hpp>
 #include <ast/expressions.hpp>
+#include <ast/manager.hpp>
 #include <memory>
 
 namespace linter
@@ -9,6 +10,10 @@ namespace linter
 
 struct address_expr_collector : public ast::statement_visitor
 {
+    address_expr_collector(ast::manager& astStore) :
+        astStore_(astStore)
+    {}
+
     void process(ast::block&);
     void process(ast::statement&);
     void process(ast::decl&);
@@ -26,7 +31,8 @@ struct address_expr_collector : public ast::statement_visitor
 
 private:
     std::vector<ast::expression*> addrExprs_;
-    std::vector<std::unique_ptr<ast::expression>> derivedExprs_;
+
+    ast::manager& astStore_;
 };
 
 }

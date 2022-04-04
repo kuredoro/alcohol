@@ -54,12 +54,15 @@ void address_expr_collector::process(ast::decl& decl)
 
 void address_expr_collector::process(ast::alloc& alloc)
 {
+    std::cout << "* processing alloc\n";
     addrExprs_.push_back(alloc.destination_var());
 
     for (size_t i = 1; i < alloc.alloc_size(); i++)
     {
-        derivedExprs_.push_back(std::make_unique<ast::add>(ast::var(alloc.destination_var()->name()), ast::integer(i)));
-        addrExprs_.push_back(derivedExprs_.back().get());
+        // TODO: test manager not to return nullptrs...
+        auto root = astStore_.make_expression<ast::add>(ast::var(astStore_, alloc.destination_var()->name()), ast::integer(astStore_, i));
+        std::cout << "new expr: " << root->to_string() << '\n';
+        addrExprs_.push_back(root);
     }
 }
 
