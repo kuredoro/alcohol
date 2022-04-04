@@ -83,7 +83,7 @@ struct manager
     {
         static_assert(std::is_base_of_v<expression, Expression>, "ast::manager::make_expression should only create subclasses of ast::expression");
 
-        auto expr = std::unique_ptr<Expression>(); // std::make_unique<Expression>(*this, std::forward<Args>(args)...);
+        auto expr = std::make_unique<Expression>(*this, std::forward<Args>(args)...);
         Expression* ptr = expr.get();
 
         expressions_.emplace_back(std::move(expr));

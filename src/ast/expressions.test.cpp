@@ -5,19 +5,21 @@
 
 int main()
 {
+    ast::manager store;
+
     auto a1 =
-        ast::add(
-            ast::multiply(ast::integer(2), ast::integer(3)),
-            ast::multiply(ast::integer(42), ast::var("foo"))
+        ast::add(store,
+            ast::multiply(store, ast::integer(store, 2), ast::integer(store, 3)),
+            ast::multiply(store, ast::integer(store, 42), ast::var(store, "foo"))
         );
 
     auto a2 =
-        ast::add(
-            ast::multiply(ast::integer(2), ast::integer(3)),
-            ast::multiply(ast::integer(42), ast::var("foo"))
+        ast::add(store,
+            ast::multiply(store, ast::integer(store, 2), ast::integer(store, 3)),
+            ast::multiply(store, ast::integer(store, 42), ast::var(store, "foo"))
         );
 
-    auto b = ast::add(ast::var("woah"), ast::var("cute"));
+    auto b = ast::add(store, ast::var(store, "woah"), ast::var(store, "cute"));
 
     std::cout << "a1: " << a1.to_string() << "\n";
     std::cout << "a2: " << a2.to_string() << "\n";

@@ -11,7 +11,7 @@ namespace ast
 
 struct var final : public expression
 {
-    var(const std::string& name) :
+    var(manager&, const std::string& name) :
         name_(name)
     {}
 
@@ -32,7 +32,7 @@ private:
 
 struct integer final : public expression
 {
-    integer(int val) :
+    integer(manager&, int val) :
         val_(val)
     {}
 
@@ -49,9 +49,9 @@ struct add final : public expression
 {
     // TODO: add concepts
     template <class LHS, class RHS>
-    add(LHS&& left, RHS&& right) :
-        left_(std::make_unique<LHS>(std::forward<LHS>(left))),
-        right_(std::make_unique<RHS>(std::forward<RHS>(right)))
+    add(manager& store, LHS&& left, RHS&& right) :
+        left_(store.acquire_expression(std::forward<LHS>(left))),
+        right_(store.acquire_expression(std::forward<RHS>(right)))
     {}
 
     std::string to_string() const override
@@ -60,17 +60,17 @@ struct add final : public expression
     }
 
 private:
-    std::unique_ptr<expression> left_;
-    std::unique_ptr<expression> right_;
+    expression* left_;
+    expression* right_;
 };
 
 struct multiply final : public expression
 {
     // TODO: add concepts
     template <class LHS, class RHS>
-    multiply(LHS&& left, RHS&& right) :
-        left_(std::make_unique<LHS>(std::forward<LHS>(left))),
-        right_(std::make_unique<RHS>(std::forward<RHS>(right)))
+    multiply(manager& store, LHS&& left, RHS&& right) :
+        left_(store.acquire_expression(std::forward<LHS>(left))),
+        right_(store.acquire_expression(std::forward<RHS>(right)))
     {}
 
     std::string to_string() const override
@@ -80,12 +80,13 @@ struct multiply final : public expression
 
 
 private:
-    std::unique_ptr<expression> left_, right_;
+    expression* left_;
+    expression* right_;
 };
 
 bool operator==(const expression& left, const expression& right);
 bool operator!=(const expression& left, const expression& right);
 
-expression& replace_variable(expression& expr, const std::string& var, const expression& withExpr);
+expression* replace_variable(manager& store, expression* expr, const std::string& var, const expression* withExpr);
 
 };
