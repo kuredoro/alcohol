@@ -74,8 +74,8 @@ private:
 
 struct alloc final : public visitable_statement<alloc>
 {
-    alloc(manager&, const std::string& varName, size_t size) :
-        destVar_(varName), allocSize_(size)
+    alloc(manager& store, const std::string& varName, size_t size) :
+        destVar_(store, varName), allocSize_(size)
     {}
 
     std::string to_string() const override
@@ -124,8 +124,8 @@ private:
 
 struct load final : public visitable_statement<load>
 {
-    load(manager&, const std::string& toVar, const std::string& fromVar) :
-        toVar_(toVar), fromVar_(fromVar)
+    load(manager& store, const std::string& toVar, const std::string& fromVar) :
+        toVar_(store, toVar), fromVar_(store, fromVar)
     {}
 
     std::string to_string() const override
@@ -144,8 +144,8 @@ private:
 
 struct dispose final : public visitable_statement<dispose>
 {
-    explicit dispose(manager&, const std::string& varName) :
-        targetVar_(varName)
+    explicit dispose(manager& store, const std::string& varName) :
+        targetVar_(store, varName)
     {}
 
     std::string to_string() const override
