@@ -27,6 +27,7 @@ function(add_component name)
     endif()
 
     add_library(${name} STATIC ${file_HEADER} ${file_IMPL})
+    set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX)
     target_compile_features(${name} PUBLIC ${COMPONENT_DEFAULT_COMPILE_FEATURES})
     target_include_directories(${name} PUBLIC ${COMPONENT_SOURCE_ROOT})
 
