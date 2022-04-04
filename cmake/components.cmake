@@ -39,7 +39,7 @@ function(add_component name)
             target_compile_definitions(${name}_test PRIVATE BOOST_UT_DISABLE_MODULE)
         endif()
 
-        add_test(NAME ${name} COMMAND ${name}-test)
+        add_test(NAME ${name} COMMAND ${name}_test)
 
         # Create a run-all target for tests, when creating the first test for the current project.
         # ctest should never compile the tests themselves, because we lose the progress feedback
@@ -48,7 +48,7 @@ function(add_component name)
         if(NOT ${tests_created_for_this_project})
             set(tests_created_for_this_project TRUE PARENT_SCOPE)
             add_custom_target("${PROJECT_NAME}_tests"
-                ctest --output-on-failure -R "${PROJECT_NAME}" --test-dir ${CMAKE_BINARY_DIR} -C "$<CONFIG>"
+                ctest --output-on-failure --test-dir ${CMAKE_BINARY_DIR} -C "$<CONFIG>"
                 WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
         endif()
 
