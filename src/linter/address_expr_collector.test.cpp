@@ -11,6 +11,24 @@
 
 using namespace boost::ut;
 
+std::string to_string(const gsl::span<ast::expression*> exprs)
+{
+    if (exprs.empty())
+        return "[]";
+
+    std::stringstream ss;
+    ss << "[";
+
+    for (size_t i = 0; i < exprs.size() - 1; i++)
+    {
+        ss << exprs[i]->to_string() << ", ";
+    }
+
+    ss << exprs.back()->to_string() << "]";
+
+    return ss.str();
+}
+
 bool assert_no_duplicates(const gsl::span<ast::expression*> exprs)
 {
     std::vector<int> eqClasses(exprs.size(), -1);
@@ -26,7 +44,6 @@ bool assert_no_duplicates(const gsl::span<ast::expression*> exprs)
         size_t dupCount = 0;
         for (size_t j = i + 1; j < exprs.size(); j++)
         {
-            std::cout << "i = " << i << " and j = " << j << " :: " << exprs[i]->to_string() << " vs. " << exprs[j]->to_string() << '\n';
             if (exprs[i]->to_string() == exprs[j]->to_string())
             {
                 eqClasses[j] = i;
@@ -40,16 +57,51 @@ bool assert_no_duplicates(const gsl::span<ast::expression*> exprs)
 
     if (!noDuplicates)
     {
-        std::stringstream ss;
-        for (auto& expr : exprs)
-        {
-            ss << expr->to_string() << " ";
-        }
-
-        expect(false) << "expression array has duplicates:" << ss.str();
+        expect(false) << "got expression array containing duplicates:" << to_string(exprs);
     }
 
     return noDuplicates;
+}
+
+bool assert_expression_sets(const gsl::span<ast::expression*> got, const gsl::span<ast::expression*> want)
+{
+    bool gotIsSet = true, wantIsSet = true;
+    expect(gotIsSet = assert_no_duplicates(got)) << "but it should contain only unique expressions";
+    expect(wantIsSet = assert_no_duplicates(want)) << "the test case is flawed (!!!)";
+
+    if (!wantIsSet)
+        return false;
+
+    std::unordered_map<std::string, std::pair<size_t, size_t>> count;
+    for (auto& expr : got)
+    {
+        count[expr->to_string()].first++;
+    }
+
+    for (auto& expr : want)
+    {
+        count[expr->to_string()].second++;
+    }
+
+    bool same = true;
+    for (auto& kv : count)
+    {
+        if (kv.second.first != 0 && kv.second.second != 0)
+            continue;
+
+        same = false;
+        if (kv.second.first == 0)
+            expect(false) << "missing" << kv.first;
+        else if (kv.second.second == 0)
+            expect(false) << "got superfluous" << kv.first;
+    }
+
+    if (!same)
+    {
+        expect(false) << "got expressions" << to_string(got) << "want" << to_string(want);
+    }
+
+    return same;
 }
 
 int main()
@@ -98,7 +150,7 @@ int main()
                 std::cout << expr->to_string() << '\n';
             }
 
-            expect(assert_no_duplicates(got) >> fatal);
+            assert_expression_sets(got, want);
         };
     };
 
