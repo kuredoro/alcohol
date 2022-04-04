@@ -104,36 +104,50 @@ bool assert_expression_sets(const gsl::span<ast::expression*> got, const gsl::sp
     return same;
 }
 
+struct test_case
+{
+    std::string name;
+    ast::statement* input;
+    std::vector<ast::expression*> want;
+};
+
 int main()
 {
     ast::manager store;
 
-    "per_definition"_test = [&] {
-        should("allocation_lhs") = [&] {
-            auto input = store.make_statement<ast::alloc>(
+    std::vector<test_case> perDefinitionCases{
+        {
+            "allocation_lhs",
+            store.make_statement<ast::alloc>(
                 "foo", 3
-            );
-
-            std::vector<ast::expression*> want{
+            ),
+            {
                 store.make_expression<ast::var>("foo"),
                 store.make_expression<ast::add>(ast::var(store, "foo"), ast::integer(store, 1)),
                 store.make_expression<ast::add>(ast::var(store, "foo"), ast::integer(store, 2)),
-            };
+            },
+        }
+    };
 
-            linter::address_expr_collector collector(store);
+    "per_definition"_test = [&] {
+        for (auto& testCase : perDefinitionCases)
+        {
+            should(testCase.name) = [&] {
+                linter::address_expr_collector collector(store);
 
-            collector.process(*input);
+                testCase.input->accept(collector);
 
-            auto got = collector.address_expressions();
+                auto got = collector.address_expressions();
 
-            std::stringstream ss;
-            for (auto& expr : got)
-            {
-                ss << expr->to_string() << " ";
-            }
+                std::stringstream ss;
+                for (auto& expr : got)
+                {
+                    ss << expr->to_string() << " ";
+                }
 
-            assert_expression_sets(got, want);
-        };
+                assert_expression_sets(got, testCase.want);
+            };   
+        }
     };
 
     /*
