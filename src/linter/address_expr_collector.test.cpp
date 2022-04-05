@@ -7,11 +7,13 @@
 #include <ast/expressions.hpp>
 
 #include <iostream>
+#include <type_traits>
 #include <unordered_map>
 
 using namespace boost::ut;
 
-std::string to_string(const gsl::span<ast::expression*> exprs)
+template <class Container>
+std::string to_string(const Container& exprs)
 {
     if (exprs.empty())
         return "[]";
@@ -29,7 +31,8 @@ std::string to_string(const gsl::span<ast::expression*> exprs)
     return ss.str();
 }
 
-bool assert_no_duplicates(const gsl::span<ast::expression*> exprs)
+template <class Container>
+bool assert_no_duplicates(const Container& exprs)
 {
     std::vector<int> eqClasses(exprs.size(), -1);
 
@@ -63,7 +66,12 @@ bool assert_no_duplicates(const gsl::span<ast::expression*> exprs)
     return noDuplicates;
 }
 
-bool assert_expression_sets(const gsl::span<ast::expression*> got, const gsl::span<ast::expression*> want)
+template <
+    class ContainerA,
+    class ContainerB,
+    bool = std::is_base_of<ast::expression, typename ContainerA::value_type>::value,
+    bool = std::is_base_of<ast::expression, typename ContainerB::value_type>::value>
+bool assert_expression_sets(const ContainerA& got, const ContainerB& want)
 {
     bool gotIsSet = true, wantIsSet = true;
     expect(gotIsSet = assert_no_duplicates(got)) << "but it should contain only unique expressions";
@@ -108,7 +116,8 @@ struct test_case
 {
     std::string name;
     ast::statement* input;
-    std::vector<ast::expression*> want;
+    std::vector<ast::var*> wantVars;
+    std::vector<ast::expression*> wantExprs;
 };
 
 int main()
@@ -117,16 +126,19 @@ int main()
 
     std::vector<test_case> perDefinitionCases{
         {
-            "allocation_lhs",
+            "allocation_statement",
             store.make_statement<ast::alloc>(
                 "foo", 3
             ),
             {
                 store.make_expression<ast::var>("foo"),
+            },
+            {
+                store.make_expression<ast::var>("foo"),
                 store.make_expression<ast::add>(ast::var(store, "foo"), ast::integer(store, 1)),
                 store.make_expression<ast::add>(ast::var(store, "foo"), ast::integer(store, 2)),
             },
-        }
+        },
     };
 
     "per_definition"_test = [&] {
@@ -137,15 +149,11 @@ int main()
 
                 testCase.input->accept(collector);
 
-                auto got = collector.address_expressions();
+                auto gotVars = collector.address_variables();
+                auto gotExprs = collector.address_expressions();
 
-                std::stringstream ss;
-                for (auto& expr : got)
-                {
-                    ss << expr->to_string() << " ";
-                }
-
-                assert_expression_sets(got, testCase.want);
+                assert_expression_sets(gotVars, testCase.wantVars);
+                assert_expression_sets(gotExprs, testCase.wantExprs);
             };   
         }
     };
