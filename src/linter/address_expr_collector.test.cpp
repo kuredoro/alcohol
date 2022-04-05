@@ -149,7 +149,7 @@ int main()
                 store.make_expression<ast::var>("foo"),
             },
             {
-                // TODO
+                store.make_expression<ast::var>("foo"),
             },
         },
         {
@@ -161,7 +161,19 @@ int main()
                 store.make_expression<ast::var>("bar"),
             },
             {
-                // TODO
+                store.make_expression<ast::var>("bar"),
+            },
+        },
+        {
+            "dispose",
+            store.make_statement<ast::dispose>(
+                "zap"
+            ),
+            {
+                store.make_expression<ast::var>("zap"),
+            },
+            {
+                store.make_expression<ast::var>("zap"),
             },
         },
     };
@@ -178,7 +190,7 @@ int main()
                 auto gotExprs = collector.address_expressions();
 
                 expect(assert_expression_sets(gotVars, testCase.wantVars)) << "while asserting found address variables";
-                //assert_expression_sets(gotExprs, testCase.wantExprs);
+                expect(assert_expression_sets(gotExprs, testCase.wantExprs)) << "while asserting found address expressions";
             };   
         }
     };
