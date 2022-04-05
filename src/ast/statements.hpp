@@ -124,22 +124,25 @@ private:
 
 struct load final : public visitable_statement<load>
 {
-    load(manager& store, const std::string& toVar, const std::string& fromVar) :
-        toVar_(store, toVar), fromVar_(store, fromVar)
+    // TODO: expr base check, concepts pwease!!!
+    template <class RHS>
+    load(manager& store, const std::string& toVar, RHS&& addrExpr) :
+        toVar_(store, toVar), fromPlace_(store.acquire_expression(std::forward<RHS>(addrExpr)))
     {}
 
     std::string to_string() const override
     {
-        return toVar_.to_string() + " := *" + fromVar_.to_string() + "\n";
+        return toVar_.to_string() + " := *" + fromPlace_->to_string() + "\n";
     }
 
-    var* source()
+    ast::expression* source()
     {
-        return &fromVar_;
+        return fromPlace_;
     }
 
 private:
-    var toVar_, fromVar_;
+    var toVar_;
+    expression* fromPlace_;
 };
 
 struct dispose final : public visitable_statement<dispose>

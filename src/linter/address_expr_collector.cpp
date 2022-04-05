@@ -78,8 +78,12 @@ void address_expr_collector::process(ast::store& store)
 
 void address_expr_collector::process(ast::load& load)
 {
-    addrVars_.push_back(load.source());
     addrExprs_.push_back(load.source());
+    
+    if (auto var = dynamic_cast<ast::var*>(load.source()); var != nullptr)
+    {
+        addrVars_.push_back(var);
+    }
 }
 
 void address_expr_collector::process(ast::dispose& dispose)

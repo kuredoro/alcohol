@@ -155,7 +155,7 @@ int main()
         {
             "load_from_var",
             store.make_statement<ast::load>(
-                "foo", "bar"
+                "foo", ast::var(store, "bar")
             ),
             {
                 store.make_expression<ast::var>("bar"),
