@@ -28,6 +28,8 @@ struct statement
     virtual ~statement() = default;
 };
 
+struct expression_visitor;
+
 struct expression 
 {
     expression() = default;
@@ -46,6 +48,8 @@ struct expression
     {
         return "<unknow expression>";
     }
+
+    virtual void accept(expression_visitor&);
 
     virtual ~expression() = default;
 };

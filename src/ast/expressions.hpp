@@ -9,7 +9,13 @@
 namespace ast
 {
 
-struct var final : public expression
+template <class X, class SubType = expression>
+struct visitable_expression : public SubType
+{
+    virtual void accept(expression_visitor& visitor);
+};
+
+struct var final : public visitable_expression<var>
 {
     var(manager&, const std::string& name) :
         name_(name)
@@ -30,7 +36,7 @@ private:
     std::string name_;
 };
 
-struct integer final : public expression
+struct integer final : public visitable_expression<integer>
 {
     integer(manager&, int val) :
         val_(val)
@@ -45,7 +51,7 @@ private:
     int val_;
 };
 
-struct add final : public expression
+struct add final : public visitable_expression<add>
 {
     // TODO: add concepts
     template <class LHS, class RHS>
@@ -64,7 +70,7 @@ private:
     expression* right_;
 };
 
-struct multiply final : public expression
+struct multiply final : public visitable_expression<multiply>
 {
     // TODO: add concepts
     template <class LHS, class RHS>
@@ -83,6 +89,21 @@ private:
     expression* left_;
     expression* right_;
 };
+
+struct expression_visitor
+{
+    virtual void process(expression&) = 0;
+    virtual void process(var&) = 0;
+    virtual void process(integer&) = 0;
+    virtual void process(add&) = 0;
+    virtual void process(multiply&) = 0;
+};
+
+template <class X, class SubType>
+void visitable_expression<X, SubType>::accept(expression_visitor& visitor)
+{
+    visitor.process(static_cast<X&>(*this));
+}
 
 bool operator==(const expression& left, const expression& right);
 bool operator!=(const expression& left, const expression& right);
