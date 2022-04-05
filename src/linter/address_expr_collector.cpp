@@ -120,8 +120,7 @@ void address_expr_collector::process(ast::store& store)
     var_collector collector;
     place->accept(collector);
 
-    auto foundVars = collector.vars();
-    for (auto& var : foundVars)
+    for (auto& var : collector.vars())
     {
         push_back_if_absent(addrVars_,var);
         push_back_if_absent(addrExprs_, var);
@@ -130,11 +129,17 @@ void address_expr_collector::process(ast::store& store)
 
 void address_expr_collector::process(ast::load& load)
 {
-    addrExprs_.push_back(load.source());
+    auto sourcePlace = load.source();
+    addrExprs_.push_back(sourcePlace);
+    //push_back_if_absent(addrExprs_, var);
     
-    if (auto var = dynamic_cast<ast::var*>(load.source()); var != nullptr)
+    var_collector collector;
+    sourcePlace->accept(collector);
+
+    for (auto& var : collector.vars())
     {
-        addrVars_.push_back(var);
+        push_back_if_absent(addrVars_, var);
+        push_back_if_absent(addrExprs_, var);
     }
 }
 

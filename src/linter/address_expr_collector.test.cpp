@@ -226,6 +226,24 @@ int main()
                 ),
             },
         },
+        {
+            "load_from_expr",
+            store.make_statement<ast::load>(
+                "foo",
+                ast::add(store,
+                    ast::var(store, "bar"), ast::integer(store, 1)
+                )
+            ),
+            {
+                store.make_expression<ast::var>("bar"),
+            },
+            {
+                store.make_expression<ast::var>("bar"),
+                store.make_expression<ast::add>(
+                    ast::var(store, "bar"), ast::integer(store, 1)
+                ),
+            },
+        },
     };
 
     "per_definition"_test = [&] {
