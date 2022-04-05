@@ -24,12 +24,18 @@ struct address_expr_collector : public ast::statement_visitor
     void process(ast::if_else&);
     void process(ast::while_loop&);
 
+    gsl::span<ast::var*> address_variables()
+    {
+        return addrVars_;
+    }
+
     gsl::span<ast::expression*> address_expressions()
     {
         return addrExprs_;
     }
 
 private:
+    std::vector<ast::var*> addrVars_;
     std::vector<ast::expression*> addrExprs_;
 
     ast::manager& astStore_;
