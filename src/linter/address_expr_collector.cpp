@@ -130,8 +130,7 @@ void address_expr_collector::process(ast::store& store)
 void address_expr_collector::process(ast::load& load)
 {
     auto sourcePlace = load.source();
-    addrExprs_.push_back(sourcePlace);
-    //push_back_if_absent(addrExprs_, var);
+    push_back_if_absent(addrExprs_, sourcePlace);
     
     var_collector collector;
     sourcePlace->accept(collector);
