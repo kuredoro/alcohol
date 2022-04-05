@@ -140,12 +140,25 @@ int main()
             },
         },
         {
+            // Make test for expr lhs
             "store_to_var",
             store.make_statement<ast::store>(
                 ast::var(store, "foo"), ast::integer(store, 3)
             ),
             {
                 store.make_expression<ast::var>("foo"),
+            },
+            {
+                // TODO
+            },
+        },
+        {
+            "load_from_var",
+            store.make_statement<ast::load>(
+                "foo", "bar"
+            ),
+            {
+                store.make_expression<ast::var>("bar"),
             },
             {
                 // TODO
