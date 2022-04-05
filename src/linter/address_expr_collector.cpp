@@ -78,6 +78,7 @@ void address_expr_collector::process(ast::store& store)
 
 void address_expr_collector::process(ast::load& load)
 {
+    addrVars_.push_back(load.source());
     addrExprs_.push_back(load.source());
 }
 
