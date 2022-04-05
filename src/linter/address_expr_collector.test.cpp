@@ -176,6 +176,38 @@ int main()
                 store.make_expression<ast::var>("zap"),
             },
         },
+        {
+            "address_var_assignment",
+            store.make_statement<ast::block>(
+                ast::decl(store, "foo", ast::integer(store, 0)),
+                ast::alloc(store, "x", 2),
+                ast::assign(store, "x",
+                    ast::add(store,
+                        ast::multiply(store,
+                            ast::integer(store, 2), ast::var(store, "x")
+                        ),
+                        ast::integer(store, 5)
+                    )
+                ),
+                ast::assign(store, "foo", ast::var(store, "x"))
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::add>(
+                    ast::var(store, "x"),
+                    ast::integer(store, 1)
+                ),
+                store.make_expression<ast::add>(
+                    ast::multiply(store,
+                        ast::integer(store, 2), ast::var(store, "x")
+                    ),
+                    ast::integer(store, 5)
+                ),
+            },
+        },
     };
 
     "per_definition"_test = [&] {

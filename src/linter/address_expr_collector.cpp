@@ -17,39 +17,32 @@ namespace linter
 void address_expr_collector::process(ast::statement& statement)
 {
     std::cout << "<unknown statement>\n";
-    /*
-    const auto& type = typeid(statement);
-
-    // TODO: check if assembly is optimal...
-    mp_for_each<
-        mp_transform<mp_list, mp_list<ast::decl, ast::alloc, ast::store, ast::dispose>>
-    >([this, &type, &statement](auto x)
-    {
-        if (type == typeid(mp_first<decltype(x)>))
-        {
-            process(static_cast<mp_first<decltype(x)>&>(statement));
-        }
-    });
-
-    // XXX: if none of the types above match, we get silence, no warnings...
-    */
 }
 
 void address_expr_collector::process(ast::block& block)
 {
-    std::cout << "processing block\n";
-
     for (auto& statement : block.statements())
     {
         statement->accept(*this);
     }
-
-    std::cout << "done processing block\n";
 }
 
 void address_expr_collector::process(ast::decl& decl)
 {
-    std::cout << "processing decl\n";
+    std::cout << "decl stub\n";
+}
+
+void address_expr_collector::process(ast::assign& assignment)
+{
+    ast::var* dest = assignment.destination();
+    for (auto& addrVar : addrVars_)
+    {
+        if (addrVar->name() == dest->name())
+        {
+            addrExprs_.push_back(assignment.value());
+            break;
+        }
+    }
 }
 
 void address_expr_collector::process(ast::alloc& alloc)
