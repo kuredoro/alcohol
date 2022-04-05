@@ -47,6 +47,11 @@ struct integer final : public visitable_expression<integer>
         return std::to_string(val_);
     }
 
+    int value() const
+    {
+        return val_;
+    }
+
 private:
     int val_;
 };
@@ -63,6 +68,16 @@ struct add final : public visitable_expression<add>
     std::string to_string() const override
     {
         return "(" + left_->to_string() + " + " + right_->to_string() + ")";
+    }
+
+    expression* left() const
+    {
+        return left_;
+    }
+
+    expression* right() const
+    {
+        return right_;
     }
 
 private:
@@ -84,6 +99,15 @@ struct multiply final : public visitable_expression<multiply>
         return "(" + left_->to_string() + " * " + right_->to_string() + ")";
     }
 
+    expression* left() const
+    {
+        return left_;
+    }
+
+    expression* right() const
+    {
+        return right_;
+    }
 
 private:
     expression* left_;
