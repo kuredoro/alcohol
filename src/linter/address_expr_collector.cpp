@@ -54,7 +54,6 @@ void address_expr_collector::process(ast::decl& decl)
 
 void address_expr_collector::process(ast::alloc& alloc)
 {
-    std::cout << "* processing alloc\n";
     addrVars_.push_back(alloc.destination_var());
     addrExprs_.push_back(alloc.destination_var());
 
@@ -68,7 +67,13 @@ void address_expr_collector::process(ast::alloc& alloc)
 
 void address_expr_collector::process(ast::store& store)
 {
-    addrExprs_.push_back(store.destination());
+    auto place = store.destination();
+    addrExprs_.push_back(place);
+
+    if (auto var = dynamic_cast<ast::var*>(place); var != nullptr)
+    {
+        addrVars_.push_back(var);
+    }
 }
 
 void address_expr_collector::process(ast::load& load)
