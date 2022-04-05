@@ -284,6 +284,7 @@ struct statement_visitor
     virtual void process(statement&) = 0;
     virtual void process(block&) = 0;
     virtual void process(decl&) = 0;
+    virtual void process(assign&) = 0;
     virtual void process(alloc&) = 0;
     virtual void process(store&) = 0;
     virtual void process(load&) = 0;

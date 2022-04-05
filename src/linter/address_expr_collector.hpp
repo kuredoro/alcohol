@@ -17,6 +17,7 @@ struct address_expr_collector : public ast::statement_visitor
     void process(ast::block&);
     void process(ast::statement&);
     void process(ast::decl&);
+    void process(ast::assign&);
     void process(ast::alloc&);
     void process(ast::store&);
     void process(ast::dispose&);
