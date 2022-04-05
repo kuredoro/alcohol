@@ -59,16 +59,26 @@ struct assign final : public visitable_statement<assign>
 {
     template <class Expression>
     assign(manager& store, const std::string& varName, Expression&& expr) :
-        varName_(varName), expr_(store.acquire_expression(std::forward<Expression>(expr)))
+        dest_(store.make_expression<ast::var>(varName)), expr_(store.acquire_expression(std::forward<Expression>(expr)))
     {}
 
     std::string to_string() const override
     {
-        return varName_ + " := " + expr_->to_string() + "\n";
+        return dest_->to_string() + " := " + expr_->to_string() + "\n";
+    }
+
+    var* destination()
+    {
+        return dest_;
+    }
+
+    expression* value()
+    {
+        return expr_;
     }
 
 private:
-    std::string varName_;
+    var* dest_;
     expression* expr_;
 };
 
