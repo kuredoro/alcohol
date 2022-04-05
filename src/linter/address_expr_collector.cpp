@@ -84,9 +84,8 @@ void address_expr_collector::process(ast::load& load)
 
 void address_expr_collector::process(ast::dispose& dispose)
 {
+    addrVars_.push_back(dispose.target_var());
     addrExprs_.push_back(dispose.target_var());
-
-    std::cout << "processing dispose\n";
 }
 
 void address_expr_collector::process(ast::if_else& ifElse)
