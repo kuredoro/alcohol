@@ -1,4 +1,6 @@
+#include "ast/manager.hpp"
 #include <iostream>
+#include <stdexcept>
 #include <typeinfo>
 #include <typeindex>
 #include <memory>
@@ -10,6 +12,58 @@
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/mpl_list.hpp>
 using namespace boost::mp11;
+
+template <class ExpressionA, class ExpressionB>
+void push_back_if_absent(std::vector<ExpressionA*>& exprs, ExpressionB* newItem)
+{
+    for (auto& item : exprs)
+    {
+        if (*item == *newItem)
+        {
+            return;
+        }
+    }
+
+    exprs.push_back(newItem);
+}
+
+struct var_collector : public ast::expression_visitor
+{
+    void process(ast::expression& expr) override
+    {
+        throw std::runtime_error("var_collector: encountered an unknown statement type");
+    }
+
+    void process(ast::var& var) override
+    {
+        vars_.push_back(&var);
+    }
+
+    void process(ast::integer& number) override
+    {
+        // Do nothing
+    }
+
+    void process(ast::add& sum) override
+    {
+        sum.left()->accept(*this);
+        sum.right()->accept(*this);
+    }
+
+    void process(ast::multiply& product) override
+    {
+        product.left()->accept(*this);
+        product.right()->accept(*this);
+    }
+
+    gsl::span<ast::var*> vars()
+    {
+        return vars_;
+    }
+
+private:
+    std::vector<ast::var*> vars_;
+};
 
 namespace linter
 {
@@ -61,11 +115,16 @@ void address_expr_collector::process(ast::alloc& alloc)
 void address_expr_collector::process(ast::store& store)
 {
     auto place = store.destination();
-    addrExprs_.push_back(place);
+    push_back_if_absent(addrExprs_, place);
 
-    if (auto var = dynamic_cast<ast::var*>(place); var != nullptr)
+    var_collector collector;
+    place->accept(collector);
+
+    auto foundVars = collector.vars();
+    for (auto& var : foundVars)
     {
-        addrVars_.push_back(var);
+        push_back_if_absent(addrVars_,var);
+        push_back_if_absent(addrExprs_, var);
     }
 }
 

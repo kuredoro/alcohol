@@ -208,6 +208,24 @@ int main()
                 ),
             },
         },
+        {
+            "store_to_expr",
+            store.make_statement<ast::store>(
+                ast::add(store,
+                    ast::var(store, "foo"), ast::integer(store, 1)
+                ),
+                ast::integer(store, 3)
+            ),
+            {
+                store.make_expression<ast::var>("foo"),
+            },
+            {
+                store.make_expression<ast::var>("foo"),
+                store.make_expression<ast::add>(
+                    ast::var(store, "foo"), ast::integer(store, 1)
+                ),
+            },
+        },
     };
 
     "per_definition"_test = [&] {
