@@ -188,8 +188,7 @@ int main()
                         ),
                         ast::integer(store, 5)
                     )
-                ),
-                ast::assign(store, "foo", ast::var(store, "x"))
+                )
             ),
             {
                 store.make_expression<ast::var>("x"),
@@ -314,6 +313,22 @@ int main()
             store.make_statement<ast::block>(
                 ast::alloc(store, "x", 1),
                 ast::decl(store, "y", ast::var(store, "x"))
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+            },
+        },
+        {
+            "variable_is_address_if_assigned_address_expr",
+            store.make_statement<ast::block>(
+                ast::decl(store, "x", ast::integer(store, 0)),
+                ast::alloc(store, "y", 1),
+                ast::assign(store, "x", ast::var(store, "y"))
             ),
             {
                 store.make_expression<ast::var>("x"),
