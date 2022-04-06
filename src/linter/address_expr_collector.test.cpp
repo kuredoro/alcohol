@@ -309,6 +309,21 @@ int main()
                 store.make_expression<ast::var>("x"),
             },
         },
+        {
+            "address_variable_decl",
+            store.make_statement<ast::block>(
+                ast::alloc(store, "x", 1),
+                ast::decl(store, "y", ast::var(store, "x"))
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+            },
+        }
     };
 
     "per_definition"_test = [&] {

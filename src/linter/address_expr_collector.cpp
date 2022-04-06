@@ -96,7 +96,19 @@ void address_expr_collector::process(ast::block& block)
 
 void address_expr_collector::process(ast::decl& decl)
 {
-    std::cout << "decl stub\n";
+    auto vars = collect_variables(decl.value());
+    for (auto& var : vars)
+    {
+        for (auto& addrVar : addrVars_)
+        {
+            if (var->name() == addrVar->name())
+            {
+                push_back_if_absent(addrVars_, decl.variable());
+                push_back_if_absent(addrExprs_, decl.variable());
+                return;
+            }
+        }
+    }
 }
 
 void address_expr_collector::process(ast::assign& assignment)
