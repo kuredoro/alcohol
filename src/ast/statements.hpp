@@ -43,16 +43,26 @@ struct decl final : public visitable_statement<decl>
 {
     template <class Expression>
     decl(manager& store, const std::string& varName, Expression&& expr) :
-        varName_(varName), expr_(store.acquire_expression(std::forward<Expression>(expr)))
+        var_(store.make_expression<ast::var>(varName)), expr_(store.acquire_expression(std::forward<Expression>(expr)))
     {}
 
     std::string to_string() const override
     {
-        return "let " + varName_ + " := " + expr_->to_string() + "\n";
+        return "let " + var_->name() + " := " + expr_->to_string() + "\n";
+    }
+
+    var* variable() const
+    {
+        return var_;
+    }
+
+    expression* value() const
+    {
+        return expr_;
     }
 
 private:
-    std::string varName_;
+    var* var_;
     expression* expr_;
 };
 
