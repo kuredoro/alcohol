@@ -328,9 +328,10 @@ int main()
         }
     };
 
-    "small_programs"_test = [&] {
-        should("empty_example") = [&] {
-            auto input = store.make_statement<ast::block>(
+    std::vector<test_case> smallPrograms{
+        {
+            "empty_example",
+            store.make_statement<ast::block>(
                 ast::decl(store, "x", ast::integer(store, 0)),
                 ast::decl(store, "y", ast::integer(store, 0)),
 
@@ -343,28 +344,34 @@ int main()
 
                 ast::dispose(store, "x"),
                 ast::dispose(store, "y")
-            );
-
-            std::vector<ast::expression*> want{
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+            },
+            {
                 store.make_expression<ast::var>("x"),
                 store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 1)),
                 store.make_expression<ast::var>("y"),
-            };
-
-            linter::address_expr_collector collector(store);
-
-            collector.process(*input);
-
-            auto got = collector.address_expressions();
-
-            std::cout << "\n\nAddress expressions:\n";
-            for (auto& expr : got)
-            {
-                std::cout << expr->to_string() << '\n';
             }
+        }
+    };
 
-            assert_expression_sets(got, want);
-        };
+    "small_programs"_test = [&] {
+        for (auto& testCase : smallPrograms)
+        {
+            should(testCase.name) = [&] {
+                linter::address_expr_collector collector(store);
+
+                testCase.input->accept(collector);
+
+                auto gotVars = collector.address_variables();
+                auto gotExprs = collector.address_expressions();
+
+                expect(assert_expression_sets(gotVars, testCase.wantVars)) << "while asserting found address variables";
+                expect(assert_expression_sets(gotExprs, testCase.wantExprs)) << "while asserting found address expressions";
+            };
+        }
     };
 
     return 0;
