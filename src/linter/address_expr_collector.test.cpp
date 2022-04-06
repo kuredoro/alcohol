@@ -330,6 +330,43 @@ int main()
 
     std::vector<test_case> smallPrograms{
         {
+            "control_statements",
+            store.make_statement<ast::block>(
+                ast::decl(store, "x", ast::integer(store, 0)),
+                ast::if_else(store,
+                    ast::block(store,
+                        ast::while_loop(store,
+                            ast::block(store,
+                                ast::assign(store,
+                                    "x",
+                                    ast::add(store,
+                                        ast::var(store, "x"), ast::integer(store, 1)
+                                    )
+                                )
+                            )
+                        )
+                    ),
+                    ast::block(store)
+                ),
+                ast::while_loop(store,
+                    ast::if_else(store,
+                        ast::alloc(store,
+                            "x",
+                            3
+                        )
+                    )
+                )
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 1)),
+                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 2)),
+            },
+        },
+        {
             "empty_example",
             store.make_statement<ast::block>(
                 ast::decl(store, "x", ast::integer(store, 0)),
