@@ -119,7 +119,21 @@ void address_expr_collector::process(ast::assign& assignment)
         if (addrVar->name() == dest->name())
         {
             addrExprs_.push_back(assignment.value());
-            break;
+            return;
+        }
+    }
+
+    auto vars = collect_variables(assignment.value());
+    for (auto& var : vars)
+    {
+        for (auto& addrVar : addrVars_)
+        {
+            if (addrVar->name() == var->name())
+            {
+                push_back_if_absent(addrVars_, assignment.destination());
+                push_back_if_absent(addrExprs_, assignment.destination());
+                return;
+            }
         }
     }
 }
