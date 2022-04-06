@@ -150,12 +150,17 @@ void address_expr_collector::process(ast::dispose& dispose)
 
 void address_expr_collector::process(ast::if_else& ifElse)
 {
-    std::cout << "processing if_else\n";
+    ifElse.true_branch()->accept(*this);
+
+    if (auto falseBranch = ifElse.false_branch())
+    {
+        (*falseBranch)->accept(*this);
+    }
 }
 
 void address_expr_collector::process(ast::while_loop& whileLoop)
 {
-    std::cout << "processing while_loop\n";
+    whileLoop.body()->accept(*this);
 }
 
 }
