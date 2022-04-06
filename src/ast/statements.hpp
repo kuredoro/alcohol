@@ -7,6 +7,7 @@
 #include <type_traits>
 #include <vector>
 #include <utility>
+#include <optional>
 #include <gsl/gsl-lite.hpp>
 #include <boost/mp11.hpp>
 
@@ -238,6 +239,19 @@ struct if_else final : public visitable_statement<if_else>
         static_assert(FalseBranchIsStatement, "the false branch must be a statement");
     }
 
+    statement* true_branch() const
+    {
+        return trueBranch_;
+    }
+
+    std::optional<statement*> false_branch() const
+    {
+        if (falseBranch_ == nullptr)
+            return std::nullopt;
+
+        return falseBranch_;
+    }
+
     std::string to_string() const
     {
         std::string result = "if ...\n";
@@ -266,6 +280,11 @@ struct while_loop final : public visitable_statement<while_loop>
         : body_(store.acquire_statement(std::forward<Body>(body)))
     {
         static_assert(BodyIsStatement, "the while loop body must be a statement");
+    }
+
+    statement* body() const
+    {
+        return body_;
     }
 
     std::string to_string() const
