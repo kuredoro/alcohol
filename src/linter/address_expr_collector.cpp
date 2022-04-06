@@ -144,8 +144,8 @@ void address_expr_collector::process(ast::load& load)
 
 void address_expr_collector::process(ast::dispose& dispose)
 {
-    addrVars_.push_back(dispose.target_var());
-    addrExprs_.push_back(dispose.target_var());
+    push_back_if_absent(addrVars_, dispose.target_var());
+    push_back_if_absent(addrExprs_, dispose.target_var());
 }
 
 void address_expr_collector::process(ast::if_else& ifElse)
