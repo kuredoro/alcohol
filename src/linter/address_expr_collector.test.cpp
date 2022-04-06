@@ -126,7 +126,7 @@ int main()
 
     std::vector<test_case> perDefinitionCases{
         {
-            "allocation_statement",
+            "variable_assigned_allocated_memory_is_address",
             store.make_statement<ast::alloc>(
                 "foo", 3
             ),
@@ -141,7 +141,7 @@ int main()
         },
         {
             // Make test for expr lhs
-            "store_to_var",
+            "store_to_a_variable_makes_it_address",
             store.make_statement<ast::store>(
                 ast::var(store, "foo"), ast::integer(store, 3)
             ),
@@ -153,7 +153,7 @@ int main()
             },
         },
         {
-            "load_from_var",
+            "load_from_a_variable_makes_it_address",
             store.make_statement<ast::load>(
                 "foo", ast::var(store, "bar")
             ),
@@ -165,7 +165,7 @@ int main()
             },
         },
         {
-            "dispose",
+            "variable_in_dispose_is_address",
             store.make_statement<ast::dispose>(
                 "zap"
             ),
@@ -177,7 +177,7 @@ int main()
             },
         },
         {
-            "address_var_assignment",
+            "expression_assigned_to_address_var_is_address",
             store.make_statement<ast::block>(
                 ast::decl(store, "foo", ast::integer(store, 0)),
                 ast::alloc(store, "x", 2),
@@ -208,7 +208,7 @@ int main()
             },
         },
         {
-            "store_to_expr",
+            "store_to_an_expression_with_a_variable_makes_them_address",
             store.make_statement<ast::store>(
                 ast::add(store,
                     ast::var(store, "foo"), ast::integer(store, 1)
@@ -226,7 +226,7 @@ int main()
             },
         },
         {
-            "load_from_expr",
+            "load_from_an_expression_with_a_variable_makes_them_address",
             store.make_statement<ast::load>(
                 "foo",
                 ast::add(store,
@@ -244,7 +244,7 @@ int main()
             },
         },
         {
-            "two_stores_to_expr",
+            "two_stores_to_an_expression_with_a_variable_does_not_produce_duplicates",
             store.make_statement<ast::block>(
                 ast::store(store,
                     ast::add(store,
@@ -270,7 +270,7 @@ int main()
             },
         },
         {
-            "two_loads_from_expr",
+            "two_loads_from_an_expression_with_a_variable_does_not_produce_duplicates",
             store.make_statement<ast::block>(
                 ast::load(store,
                     "foo",
@@ -296,7 +296,7 @@ int main()
             },
         },
         {
-            "double_dispose",
+            "double_disposing_a_variable_does_not_produce_duplicates",
             store.make_statement<ast::block>(
                 ast::dispose(store, "x"),
                 ast::dispose(store, "x")
@@ -309,7 +309,7 @@ int main()
             },
         },
         {
-            "address_variable_decl",
+            "declared_variable_is_address_if_initialized_with_address_expression",
             store.make_statement<ast::block>(
                 ast::alloc(store, "x", 1),
                 ast::decl(store, "y", ast::var(store, "x"))
