@@ -61,9 +61,22 @@ struct var_collector : public ast::expression_visitor
         return vars_;
     }
 
+    std::vector<ast::var*> move_vars()
+    {
+        return std::move(vars_);
+    }
+
 private:
     std::vector<ast::var*> vars_;
 };
+
+std::vector<ast::var*> collect_variables(ast::expression* root)
+{
+    var_collector collector;
+    root->accept(collector);
+
+    return collector.move_vars();
+}
 
 namespace linter
 {
@@ -114,13 +127,11 @@ void address_expr_collector::process(ast::alloc& alloc)
 
 void address_expr_collector::process(ast::store& store)
 {
-    auto place = store.destination();
-    push_back_if_absent(addrExprs_, place);
+    auto destPlace = store.destination();
+    push_back_if_absent(addrExprs_, destPlace);
 
-    var_collector collector;
-    place->accept(collector);
-
-    for (auto& var : collector.vars())
+    auto vars = collect_variables(destPlace);
+    for (auto& var : vars)
     {
         push_back_if_absent(addrVars_,var);
         push_back_if_absent(addrExprs_, var);
@@ -132,10 +143,8 @@ void address_expr_collector::process(ast::load& load)
     auto sourcePlace = load.source();
     push_back_if_absent(addrExprs_, sourcePlace);
     
-    var_collector collector;
-    sourcePlace->accept(collector);
-
-    for (auto& var : collector.vars())
+    auto vars = collect_variables(sourcePlace);
+    for (auto& var : vars)
     {
         push_back_if_absent(addrVars_, var);
         push_back_if_absent(addrExprs_, var);
