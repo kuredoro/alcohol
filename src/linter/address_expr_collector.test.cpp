@@ -109,7 +109,7 @@ bool assert_expression_sets(const ContainerA& got, const ContainerB& want)
         expect(false) << "got expressions" << to_string(got) << "but want" << to_string(want);
     }
 
-    return same;
+    return gotIsSet && same;
 }
 
 struct test_case
@@ -296,6 +296,19 @@ int main()
                 ),
             },
         },
+        {
+            "double_dispose",
+            store.make_statement<ast::block>(
+                ast::dispose(store, "x"),
+                ast::dispose(store, "x")
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+            },
+        },
     };
 
     "per_definition"_test = [&] {
@@ -315,7 +328,6 @@ int main()
         }
     };
 
-    /*
     "small_programs"_test = [&] {
         should("empty_example") = [&] {
             auto input = store.make_statement<ast::block>(
@@ -354,7 +366,6 @@ int main()
             assert_expression_sets(got, want);
         };
     };
-    */
 
     return 0;
 }
