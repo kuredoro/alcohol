@@ -338,6 +338,25 @@ int main()
                 store.make_expression<ast::var>("x"),
                 store.make_expression<ast::var>("y"),
             },
+        },
+        {
+            "assigning_an_address_variable_transfers_its_implicit_address_expressions",
+            store.make_statement<ast::block>(
+                ast::alloc(store, "x", 3),
+                ast::assign(store, "y", ast::var(store, "x"))
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 1)),
+                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 2)),
+                store.make_expression<ast::var>("y"),
+                store.make_expression<ast::add>(ast::var(store, "y"), ast::integer(store, 1)),
+                store.make_expression<ast::add>(ast::var(store, "y"), ast::integer(store, 2)),
+            },
         }
     };
 
