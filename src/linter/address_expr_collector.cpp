@@ -126,6 +126,7 @@ void address_expr_collector::process(ast::assign& assignment)
     if (auto varValue = dynamic_cast<ast::var*>(assignment.value()))
     {
         auto sourceVarAllocSize = varAllocSizes_[varValue->name()];
+        varAllocSizes_[dest->name()] = sourceVarAllocSize;
         for (size_t i = 1; i < sourceVarAllocSize; i++)
         {
             auto root = astStore_.make_expression<ast::add>(ast::var(astStore_, assignment.destination()->name()), ast::integer(astStore_, i));
