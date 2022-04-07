@@ -4,6 +4,7 @@
 #include <ast/expressions.hpp>
 #include <ast/manager.hpp>
 #include <memory>
+#include <unordered_map>
 
 namespace linter
 {
@@ -38,6 +39,7 @@ struct address_expr_collector : public ast::statement_visitor
 private:
     std::vector<ast::var*> addrVars_;
     std::vector<ast::expression*> addrExprs_;
+    std::unordered_map<std::string, size_t> varAllocSizes_;
 
     ast::manager& astStore_;
 };

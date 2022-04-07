@@ -119,7 +119,17 @@ void address_expr_collector::process(ast::assign& assignment)
         if (addrVar->name() == dest->name())
         {
             addrExprs_.push_back(assignment.value());
-            return;
+            break;
+        }
+    }
+
+    if (auto varValue = dynamic_cast<ast::var*>(assignment.value()))
+    {
+        auto sourceVarAllocSize = varAllocSizes_[varValue->name()];
+        for (size_t i = 1; i < sourceVarAllocSize; i++)
+        {
+            auto root = astStore_.make_expression<ast::add>(ast::var(astStore_, assignment.destination()->name()), ast::integer(astStore_, i));
+            addrExprs_.push_back(root);
         }
     }
 
@@ -142,6 +152,8 @@ void address_expr_collector::process(ast::alloc& alloc)
 {
     addrVars_.push_back(alloc.destination_var());
     addrExprs_.push_back(alloc.destination_var());
+
+    varAllocSizes_[alloc.destination_var()->name()] = alloc.alloc_size();
 
     for (size_t i = 1; i < alloc.alloc_size(); i++)
     {
