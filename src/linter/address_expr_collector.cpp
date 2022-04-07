@@ -96,6 +96,18 @@ void address_expr_collector::process(ast::block& block)
 
 void address_expr_collector::process(ast::decl& decl)
 {
+    // Infer address expressions if assigned value is a single address variable
+    if (auto varValue = dynamic_cast<ast::var*>(decl.value()); varValue && varAllocSizes_.count(varValue->name()) != 0)
+    {
+        auto sourceVarAllocSize = varAllocSizes_[varValue->name()];
+        varAllocSizes_[decl.variable()->name()] = sourceVarAllocSize;
+        for (size_t i = 1; i < sourceVarAllocSize; i++)
+        {
+            auto root = astStore_.make_expression<ast::add>(ast::var(astStore_, decl.variable()->name()), ast::integer(astStore_, i));
+            push_back_if_absent(addrExprs_, root);
+        }
+    }
+
     auto vars = collect_variables(decl.value());
     for (auto& var : vars)
     {
@@ -113,6 +125,7 @@ void address_expr_collector::process(ast::decl& decl)
 
 void address_expr_collector::process(ast::assign& assignment)
 {
+    // RHS is an address expression if being assigned to an address variable
     ast::var* dest = assignment.destination();
     for (auto& addrVar : addrVars_)
     {
@@ -123,7 +136,8 @@ void address_expr_collector::process(ast::assign& assignment)
         }
     }
 
-    if (auto varValue = dynamic_cast<ast::var*>(assignment.value()))
+    // Infer address expressions if assigned value is a single address variable
+    if (auto varValue = dynamic_cast<ast::var*>(assignment.value()); varValue && varAllocSizes_.count(varValue->name()) != 0)
     {
         auto sourceVarAllocSize = varAllocSizes_[varValue->name()];
         varAllocSizes_[dest->name()] = sourceVarAllocSize;
@@ -134,6 +148,7 @@ void address_expr_collector::process(ast::assign& assignment)
         }
     }
 
+    // Mark destination as an address variable if an expression contains an address variable
     auto vars = collect_variables(assignment.value());
     for (auto& var : vars)
     {
