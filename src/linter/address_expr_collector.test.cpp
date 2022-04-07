@@ -279,12 +279,14 @@ int main()
             store.make_statement<ast::block>(
                 ast::alloc(store, "x", 3),
                 ast::assign(store, "y", ast::var(store, "x")),
-                ast::assign(store, "z", ast::var(store, "y"))
+                ast::assign(store, "z", ast::var(store, "y")),
+                ast::assign(store, "n", ast::var(store, "y"))
             ),
             {
                 store.make_expression<ast::var>("x"),
                 store.make_expression<ast::var>("y"),
                 store.make_expression<ast::var>("z"),
+                store.make_expression<ast::var>("n"),
             },
             {
                 store.make_expression<ast::var>("x"),
@@ -296,6 +298,38 @@ int main()
                 store.make_expression<ast::var>("z"),
                 store.make_expression<ast::add>(ast::var(store, "z"), ast::integer(store, 1)),
                 store.make_expression<ast::add>(ast::var(store, "z"), ast::integer(store, 2)),
+                store.make_expression<ast::var>("n"),
+                store.make_expression<ast::add>(ast::var(store, "n"), ast::integer(store, 1)),
+                store.make_expression<ast::add>(ast::var(store, "n"), ast::integer(store, 2)),
+            },
+        },
+        {
+            "assigning_an_address_variable_to_declaration_transfers_its_implicit_address_expressions",
+            store.make_statement<ast::block>(
+                ast::alloc(store, "x", 3),
+                ast::decl(store, "y", ast::var(store, "x")),
+                ast::decl(store, "z", ast::var(store, "y")),
+                ast::decl(store, "n", ast::var(store, "y"))
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+                store.make_expression<ast::var>("z"),
+                store.make_expression<ast::var>("n"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 1)),
+                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 2)),
+                store.make_expression<ast::var>("y"),
+                store.make_expression<ast::add>(ast::var(store, "y"), ast::integer(store, 1)),
+                store.make_expression<ast::add>(ast::var(store, "y"), ast::integer(store, 2)),
+                store.make_expression<ast::var>("z"),
+                store.make_expression<ast::add>(ast::var(store, "z"), ast::integer(store, 1)),
+                store.make_expression<ast::add>(ast::var(store, "z"), ast::integer(store, 2)),
+                store.make_expression<ast::var>("n"),
+                store.make_expression<ast::add>(ast::var(store, "n"), ast::integer(store, 1)),
+                store.make_expression<ast::add>(ast::var(store, "n"), ast::integer(store, 2)),
             },
         }
     };
