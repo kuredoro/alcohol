@@ -309,6 +309,20 @@ int main()
             },
         },
         {
+            "double_allocation_does_not_produce_duplicates",
+            store.make_statement<ast::block>(
+                ast::alloc(store, "x", 2),
+                ast::alloc(store, "x", 2)
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 1)),
+            },
+        },
+        {
             "declared_variable_is_address_if_initialized_with_address_expression",
             store.make_statement<ast::block>(
                 ast::alloc(store, "x", 1),

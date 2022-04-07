@@ -150,8 +150,8 @@ void address_expr_collector::process(ast::assign& assignment)
 
 void address_expr_collector::process(ast::alloc& alloc)
 {
-    addrVars_.push_back(alloc.destination_var());
-    addrExprs_.push_back(alloc.destination_var());
+    push_back_if_absent(addrVars_, alloc.destination_var());
+    push_back_if_absent(addrExprs_, alloc.destination_var());
 
     varAllocSizes_[alloc.destination_var()->name()] = alloc.alloc_size();
 
@@ -159,7 +159,7 @@ void address_expr_collector::process(ast::alloc& alloc)
     {
         // TODO: test manager not to return nullptrs...
         auto root = astStore_.make_expression<ast::add>(ast::var(astStore_, alloc.destination_var()->name()), ast::integer(astStore_, i));
-        addrExprs_.push_back(root);
+        push_back_if_absent(addrExprs_, root);
     }
 }
 
