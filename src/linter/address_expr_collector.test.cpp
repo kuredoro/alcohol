@@ -244,6 +244,64 @@ int main()
             },
         },
         {
+            "declared_variable_is_address_if_initialized_with_address_expression",
+            store.make_statement<ast::block>(
+                ast::alloc(store, "x", 1),
+                ast::decl(store, "y", ast::var(store, "x"))
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+            },
+        },
+        {
+            "variable_is_address_if_assigned_address_expr",
+            store.make_statement<ast::block>(
+                ast::decl(store, "x", ast::integer(store, 0)),
+                ast::alloc(store, "y", 1),
+                ast::assign(store, "x", ast::var(store, "y"))
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+            },
+        },
+        {
+            "assigning_an_address_variable_transfers_its_implicit_address_expressions",
+            store.make_statement<ast::block>(
+                ast::alloc(store, "x", 3),
+                ast::assign(store, "y", ast::var(store, "x")),
+                ast::assign(store, "z", ast::var(store, "y"))
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+                store.make_expression<ast::var>("z"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 1)),
+                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 2)),
+                store.make_expression<ast::var>("y"),
+                store.make_expression<ast::add>(ast::var(store, "y"), ast::integer(store, 1)),
+                store.make_expression<ast::add>(ast::var(store, "y"), ast::integer(store, 2)),
+                store.make_expression<ast::var>("z"),
+                store.make_expression<ast::add>(ast::var(store, "z"), ast::integer(store, 1)),
+                store.make_expression<ast::add>(ast::var(store, "z"), ast::integer(store, 2)),
+            },
+        }
+    };
+
+    std::vector<test_case> noDuplicatesCases{
+        {
             "two_stores_to_an_expression_with_a_variable_does_not_produce_duplicates",
             store.make_statement<ast::block>(
                 ast::store(store,
@@ -322,73 +380,6 @@ int main()
                 store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 1)),
             },
         },
-        {
-            "declared_variable_is_address_if_initialized_with_address_expression",
-            store.make_statement<ast::block>(
-                ast::alloc(store, "x", 1),
-                ast::decl(store, "y", ast::var(store, "x"))
-            ),
-            {
-                store.make_expression<ast::var>("x"),
-                store.make_expression<ast::var>("y"),
-            },
-            {
-                store.make_expression<ast::var>("x"),
-                store.make_expression<ast::var>("y"),
-            },
-        },
-        {
-            "variable_is_address_if_assigned_address_expr",
-            store.make_statement<ast::block>(
-                ast::decl(store, "x", ast::integer(store, 0)),
-                ast::alloc(store, "y", 1),
-                ast::assign(store, "x", ast::var(store, "y"))
-            ),
-            {
-                store.make_expression<ast::var>("x"),
-                store.make_expression<ast::var>("y"),
-            },
-            {
-                store.make_expression<ast::var>("x"),
-                store.make_expression<ast::var>("y"),
-            },
-        },
-        {
-            "assigning_an_address_variable_transfers_its_implicit_address_expressions",
-            store.make_statement<ast::block>(
-                ast::alloc(store, "x", 3),
-                ast::assign(store, "y", ast::var(store, "x"))
-            ),
-            {
-                store.make_expression<ast::var>("x"),
-                store.make_expression<ast::var>("y"),
-            },
-            {
-                store.make_expression<ast::var>("x"),
-                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 1)),
-                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 2)),
-                store.make_expression<ast::var>("y"),
-                store.make_expression<ast::add>(ast::var(store, "y"), ast::integer(store, 1)),
-                store.make_expression<ast::add>(ast::var(store, "y"), ast::integer(store, 2)),
-            },
-        }
-    };
-
-    "per_definition"_test = [&] {
-        for (auto& testCase : perDefinitionCases)
-        {
-            should(testCase.name) = [&] {
-                linter::address_expr_collector collector(store);
-
-                testCase.input->accept(collector);
-
-                auto gotVars = collector.address_variables();
-                auto gotExprs = collector.address_expressions();
-
-                expect(assert_expression_sets(gotVars, testCase.wantVars)) << "while asserting found address variables";
-                expect(assert_expression_sets(gotExprs, testCase.wantExprs)) << "while asserting found address expressions";
-            };   
-        }
     };
 
     std::vector<test_case> smallPrograms{
@@ -457,22 +448,30 @@ int main()
         }
     };
 
-    "small_programs"_test = [&] {
-        for (auto& testCase : smallPrograms)
-        {
-            should(testCase.name) = [&] {
-                linter::address_expr_collector collector(store);
+    auto runCases = [&store] (const std::vector<test_case>& cases) {
+        return [&store, &cases] () {
+            for (auto& testCase : cases)
+            {
+                should(testCase.name) = [&] {
+                    linter::address_expr_collector collector(store);
 
-                testCase.input->accept(collector);
+                    testCase.input->accept(collector);
 
-                auto gotVars = collector.address_variables();
-                auto gotExprs = collector.address_expressions();
+                    auto gotVars = collector.address_variables();
+                    auto gotExprs = collector.address_expressions();
 
-                expect(assert_expression_sets(gotVars, testCase.wantVars)) << "while asserting found address variables";
-                expect(assert_expression_sets(gotExprs, testCase.wantExprs)) << "while asserting found address expressions";
-            };
-        }
+                    expect(assert_expression_sets(gotVars, testCase.wantVars)) << "while asserting found address variables";
+                    expect(assert_expression_sets(gotExprs, testCase.wantExprs)) << "while asserting found address expressions";
+                };   
+            }
+        };
     };
+
+    "per_definition"_test = runCases(perDefinitionCases);
+
+    "no_duplicates"_test = runCases(noDuplicatesCases);
+
+    "small_programs"_test = runCases(smallPrograms);
 
     return 0;
 }
