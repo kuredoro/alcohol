@@ -31,7 +31,7 @@ int main()
                         ast::assign(store, "foo", ast::add(store, ast::var(store, "array"), ast::integer(store, 2)))
                     ),
                     ast::store(store, ast::var(store, "foo"), ast::integer(store, -1)),
-                    ast::load(store, "foo", "foo")
+                    ast::load(store, "foo", ast::var(store, "foo"))
                 )
             )
         );
