@@ -5,8 +5,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include(CTest)
 include(components)
 
-set(CMAKE_CXX_STANDARD 17 CACHE STRING "")
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 20 CACHE STRING "")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
@@ -39,25 +38,25 @@ add_component(ast_expressions
     HEADER src/ast/expressions.hpp
     IMPL src/ast/expressions.cpp
     TEST src/ast/expressions.test.cpp)
-target_link_libraries(ast_expressions PUBLIC ast_manager)
+target_link_libraries(ast_expressions ast_manager)
 
 add_component(ast_statements
     HEADER src/ast/statements.hpp
     IMPL src/ast/statements.cpp
     TEST src/ast/statements.test.cpp)
-target_link_libraries(ast_statements PUBLIC CONAN_PKG::gsl-lite util_for_each_argument util_indent_text ast_manager ast_expressions)
+target_link_libraries(ast_statements CONAN_PKG::gsl-lite util_for_each_argument util_indent_text ast_manager ast_expressions)
 
 add_component(address_expr_collector
     HEADER src/linter/address_expr_collector.hpp
     IMPL src/linter/address_expr_collector.cpp
     TEST src/linter/address_expr_collector.test.cpp)
-target_link_libraries(address_expr_collector PUBLIC CONAN_PKG::gsl-lite ast_manager ast_statements ast_expressions)
+target_link_libraries(address_expr_collector CONAN_PKG::gsl-lite ast_manager ast_statements ast_expressions)
 
 add_component(linter
     HEADER src/linter/linter.hpp
     IMPL src/linter/linter.cpp
     TEST src/linter/linter.test.cpp)
-target_link_libraries(linter PUBLIC ast_manager ast_statements ast_expressions address_expr_collector)
+target_link_libraries(linter ast_manager ast_statements ast_expressions address_expr_collector)
 
 ## 
 ## LLVM setup
