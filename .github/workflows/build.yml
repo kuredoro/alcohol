@@ -40,7 +40,7 @@ jobs:
         run: conan profile new default --detect
         
       - name: Install dependencies
-        run: conan install -if=build -s build_type=${{env.BUILD_TYPE}} --build=missing .
+        run: conan install -if=build -s build_type=${{env.BUILD_TYPE}} --build=outdated .
 
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory.
