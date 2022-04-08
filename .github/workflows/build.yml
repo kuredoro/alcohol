@@ -28,7 +28,15 @@ jobs:
       - name: Get Conan
         uses: turtlebrowser/get-conan@v1.0
         
+      - uses: actions/cache@v3
+        name: Cache conan libraries
+        id: cache
+        with:
+          path: ~/.conan
+          key: ${{ runner.os }}-${{ hashFiles('conanfile.txt') }}
+
       - name: Create default profile
+        if: steps.cache.outputs.cache-hit != 'true'
         run: conan profile new default --detect
         
       - name: Install dependencies
