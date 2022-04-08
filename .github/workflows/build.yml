@@ -12,8 +12,16 @@ env:
 
 jobs:
   test:
-    name: Test
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cfg:
+          - name: Ubuntu
+            os: ubuntu-latest
+          - name: Windows
+            os: windows-latest
+
+    name: Test on ${{ matrix.cfg.name }}
+    runs-on: ${{ matrix.cfg.os }}
     steps:
       - uses: actions/checkout@v2
       
