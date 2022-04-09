@@ -17,11 +17,15 @@ jobs:
         cfg:
           - name: Ubuntu
             os: ubuntu-latest
+            conan-cache-dirs: |
+              ~/.conan
+              build
           - name: Windows
             os: windows-latest
-
-    env:
-      CONAN_USER_HOME: ~/conan_home
+            conan-cache-dirs: |
+              ~/.conan
+              /.conan
+              build
 
     name: Test on ${{ matrix.cfg.name }}
     runs-on: ${{ matrix.cfg.os }}
@@ -35,9 +39,7 @@ jobs:
         name: Cache conan libraries
         id: cache
         with:
-          path: |
-            ${{ env.CONAN_USER_HOME }}
-            build
+          path: ${{ matrix.cfg.conan-cache-dirs }}
           key: ${{ runner.os }}-${{ hashFiles('conanfile.txt') }}
 
       - name: Create default profile
