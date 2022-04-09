@@ -55,7 +55,7 @@ bool assert_no_duplicates(const Container& exprs)
             }
         }
 
-        expect(dupCount == 0_i) << "duplicates for expression" << exprs[i]->to_string();
+        expect(dupCount == 0) << "found" << dupCount << "duplicates for expression" << exprs[i]->to_string();
     }
 
     if (!noDuplicates)

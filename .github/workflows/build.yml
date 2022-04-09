@@ -12,21 +12,42 @@ env:
 
 jobs:
   test:
-    name: Test
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cfg:
+          - name: Ubuntu
+            os: ubuntu-latest
+            conan-cache-dirs: |
+              ~/.conan
+              build
+          - name: Windows
+            os: windows-latest
+            conan-cache-dirs: |
+              ~/.conan
+              /.conan
+              build
+
+    name: Test on ${{ matrix.cfg.name }}
+    runs-on: ${{ matrix.cfg.os }}
     steps:
       - uses: actions/checkout@v2
       
       - name: Get Conan
         uses: turtlebrowser/get-conan@v1.0
         
+      - uses: actions/cache@v3
+        name: Cache conan libraries
+        id: cache
+        with:
+          path: ${{ matrix.cfg.conan-cache-dirs }}
+          key: ${{ runner.os }}-${{ hashFiles('conanfile.txt') }}
+
       - name: Create default profile
+        if: steps.cache.outputs.cache-hit != 'true'
         run: conan profile new default --detect
         
-      - name: Update profile
-        run: conan profile update settings.compiler.libcxx=libstdc++11 default
-        
       - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: conan install -if=build -s build_type=${{env.BUILD_TYPE}} --build=missing .
 
       - name: Configure CMake
