@@ -24,6 +24,9 @@ jobs:
               ~/.conan
               /.conan
 
+    env:
+      CONAN_USER_HOME: ~/conan_home
+
     name: Test on ${{ matrix.cfg.name }}
     runs-on: ${{ matrix.cfg.os }}
     steps:
@@ -36,7 +39,7 @@ jobs:
         name: Cache conan libraries
         id: cache
         with:
-          path: ${{ matrix.cfg.conan-cache }}
+          path: ${{ env.CONAN_USER_HOME }}
           key: ${{ runner.os }}-${{ hashFiles('conanfile.txt') }}
 
       - name: Create default profile
@@ -44,7 +47,7 @@ jobs:
         run: conan profile new default --detect
         
       - name: Install dependencies
-        run: conan install -if=build -s build_type=${{env.BUILD_TYPE}} --build=outdated .
+        run: conan install -if=build -s build_type=${{env.BUILD_TYPE}} --build=missing .
 
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory.
