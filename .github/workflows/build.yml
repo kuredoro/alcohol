@@ -17,12 +17,8 @@ jobs:
         cfg:
           - name: Ubuntu
             os: ubuntu-latest
-            conan-cache: ~/.conan
           - name: Windows
             os: windows-latest
-            conan-cache: |
-              ~/.conan
-              /.conan
 
     env:
       CONAN_USER_HOME: ~/conan_home
@@ -39,7 +35,9 @@ jobs:
         name: Cache conan libraries
         id: cache
         with:
-          path: ${{ env.CONAN_USER_HOME }}
+          path: |
+            ${{ env.CONAN_USER_HOME }}
+            build
           key: ${{ runner.os }}-${{ hashFiles('conanfile.txt') }}
 
       - name: Create default profile
@@ -47,6 +45,7 @@ jobs:
         run: conan profile new default --detect
         
       - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: conan install -if=build -s build_type=${{env.BUILD_TYPE}} --build=missing .
 
       - name: Configure CMake
