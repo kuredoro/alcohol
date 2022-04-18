@@ -131,6 +131,25 @@ int main()
                 ),
             },
         },
+        {
+            false,
+            {
+                store.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq,
+                    ast::add(store,
+                        ast::var(store, "foo"), ast::var(store, "bar")
+                    ),
+                    ast::integer(store, 0)
+                ),
+                store.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq,
+                    ast::add(store,
+                        ast::var(store, "foo"), ast::var(store, "bar")
+                    ),
+                    ast::integer(store, 1)
+                ),
+            },
+        },
     };
 
     "default constructed"_test = [] () {
