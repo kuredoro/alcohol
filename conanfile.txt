@@ -1,6 +1,7 @@
 [requires]
 gsl-lite/0.40.0
 boost/1.78.0
+z3/4.8.8
 
 [generators]
 cmake
