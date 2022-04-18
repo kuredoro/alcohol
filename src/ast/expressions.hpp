@@ -2,12 +2,17 @@
 
 #include <ast/manager.hpp>
 
+#include <boost/mp11.hpp>
+
 #include <string>
 #include <memory>
+#include <type_traits>
 #include <unordered_map>
 
 namespace ast
 {
+
+using namespace boost::mp11;
 
 template <class X, class SubType = expression>
 struct visitable_expression : public SubType
@@ -110,6 +115,70 @@ struct multiply final : public visitable_expression<multiply>
     }
 
 private:
+    expression* left_;
+    expression* right_;
+};
+
+struct constraint final : public visitable_expression<constraint>
+{
+    enum class relation
+    {
+        eq, neq
+    };
+
+    template <
+        class LHS,
+        class RHS,
+        bool = mp_if_c<std::is_pointer_v<LHS>, mp_true, void>::type,
+        bool = mp_if_c<std::is_pointer_v<RHS>, mp_true, void>::type
+    >
+    constraint(manager& store, relation op, LHS&& lhs, RHS&& rhs) :
+        kind_(op),
+        left_(store.acquire_expression(std::forward<LHS>(lhs))),
+        right_(store.acquire_expression(std::forward<RHS>(rhs)))
+    {}
+
+    constraint(manager& store, relation op, expression* lhs, expression* rhs) :
+        kind_(op),
+        left_(lhs),
+        right_(rhs)
+    {}
+
+    std::string to_string() const override
+    {
+        std::string opStr = "<?>";
+        switch (kind_)
+        {
+        case relation::eq:
+            opStr = "==";
+            break;
+        case relation::neq:
+            opStr = "!=";
+            break;
+        default:
+            break;
+        }
+
+        return left_->to_string() + " " + opStr + " " + right_->to_string();
+    }
+
+    relation kind() const
+    {
+        return kind_;
+    }
+
+    expression* left() const
+    {
+        return left_;
+    }
+
+    expression* right() const
+    {
+        return right_;
+    }
+
+private:
+    relation kind_;
     expression* left_;
     expression* right_;
 };
