@@ -51,7 +51,7 @@ add_component(constraint_set
     HEADER src/constraint/set.hpp
     IMPL src/constraint/set.cpp
     TEST src/constraint/set.test.cpp)
-target_link_libraries(constraint_set PUBLIC CONAN_PKG::gsl-lite ast_expressions)
+target_link_libraries(constraint_set PUBLIC CONAN_PKG::gsl-lite CONAN_PKG::z3 ast_expressions)
 
 add_component(address_expr_collector
     HEADER src/linter/address_expr_collector.hpp
