@@ -129,8 +129,8 @@ struct constraint final : public visitable_expression<constraint>
     template <
         class LHS,
         class RHS,
-        bool = mp_if_c<std::is_pointer_v<LHS>, mp_true, void>::type,
-        bool = mp_if_c<std::is_pointer_v<RHS>, mp_true, void>::type
+        bool = mp_if_c<!std::is_pointer_v<LHS>, mp_true, void>::value,
+        bool = mp_if_c<!std::is_pointer_v<RHS>, mp_true, void>::value
     >
     constraint(manager& store, relation op, LHS&& lhs, RHS&& rhs) :
         kind_(op),
