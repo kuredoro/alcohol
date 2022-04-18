@@ -76,7 +76,15 @@ namespace detail
 
     void to_z3_form_visitor::process(ast::multiply& product)
     {
-        process(static_cast<ast::expression&>(product));
+        product.left()->accept(*this);
+        z3::expr left = stack_.back();
+        stack_.pop_back();
+
+        product.right()->accept(*this);
+        z3::expr right = stack_.back();
+        stack_.pop_back();
+
+        stack_.push_back(left * right);
     }
 
     void to_z3_form_visitor::process(ast::constraint& constraint)

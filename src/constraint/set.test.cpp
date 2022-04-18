@@ -105,6 +105,47 @@ int main()
 
             expect(!constraints.check_consistency()) << "for a single constraint:" << expr->to_string();
         };
+
+        should("2 * foo != 3 * foo is consistent") = [&] () {
+            constraint::set constraints;
+
+            auto expr = store.make_expression<ast::constraint>(
+                ast::constraint::relation::neq,
+                ast::multiply(store,
+                    ast::integer(store, 2), ast::var(store, "foo")
+                ),
+                ast::multiply(store,
+                    ast::integer(store, 3), ast::var(store, "foo")
+                )
+            );
+
+            constraints.add(expr);
+
+            expect(constraints.check_consistency()) << "for a single constraint:" << expr->to_string();
+        };
+
+        should("(foo + 1) * (bar + 1) == foo * bar is consistent") = [&] () {
+            constraint::set constraints;
+
+            auto expr = store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq,
+                ast::multiply(store,
+                    ast::add(store,
+                        ast::var(store, "foo"), ast::integer(store, 1)
+                    ),
+                    ast::add(store,
+                        ast::var(store, "bar"), ast::integer(store, 1)
+                    )
+                ),
+                ast::multiply(store,
+                    ast::var(store, "foo"), ast::var(store, "bar")
+                )
+            );
+
+            constraints.add(expr);
+
+            expect(constraints.check_consistency()) << "for a single constraint:" << expr->to_string();
+        };
     };
 
     return 0;
