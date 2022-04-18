@@ -40,5 +40,13 @@ int main()
     auto eq = store.make_expression<ast::constraint>(ast::constraint::relation::eq, &a1, &b);
     std::cout << eq->to_string() << '\n';
 
+    auto neq = store.make_expression<ast::constraint>(
+        ast::constraint::relation::neq,
+        ast::var(store, "foo"),
+        ast::var(store, "bar")
+    );
+
+    std::cout << neq->to_string() << '\n';
+
     return 0;
 }
