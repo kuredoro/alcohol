@@ -48,12 +48,12 @@ namespace detail
 {
     void to_z3_form_visitor::process(ast::expression&)
     {
-        stack_.push_back(ctx_.int_const("foo") == ctx_.int_const("foo"));
+        stack_.push_back(ctx_.bool_val(false));
     }
 
     void to_z3_form_visitor::process(ast::var& var)
     {
-        process(static_cast<ast::expression&>(var));
+        stack_.push_back(ctx_.int_const(var.name().c_str()));
     }
 
     void to_z3_form_visitor::process(ast::integer& integer)
@@ -63,7 +63,15 @@ namespace detail
 
     void to_z3_form_visitor::process(ast::add& sum)
     {
-        process(static_cast<ast::expression&>(sum));
+        sum.left()->accept(*this);
+        z3::expr left = stack_.back();
+        stack_.pop_back();
+
+        sum.right()->accept(*this);
+        z3::expr right = stack_.back();
+        stack_.pop_back();
+
+        stack_.push_back(left + right);
     }
 
     void to_z3_form_visitor::process(ast::multiply& product)
@@ -73,6 +81,7 @@ namespace detail
 
     void to_z3_form_visitor::process(ast::constraint& constraint)
     {
+        // TODO: remove this boilerplate
         constraint.left()->accept(*this);
         z3::expr left = stack_.back();
         stack_.pop_back();

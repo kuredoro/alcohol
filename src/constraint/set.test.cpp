@@ -16,7 +16,7 @@ int main()
             expect(constraints.check_consistency());
         };
 
-        should("singe integer that equals to itself is consistent") = [&] () {
+        should("int1 == int1 is consistent") = [&] () {
             constraint::set constraints;
 
             auto expr = store.make_expression<ast::constraint>(
@@ -30,13 +30,75 @@ int main()
             expect(constraints.check_consistency()) << "for a single constraint:" << expr->to_string();
         };
 
-        should("singe integer that does not equal to itself is inconsistent") = [&] () {
+        should("int1 != int1 is inconsistent") = [&] () {
             constraint::set constraints;
 
             auto expr = store.make_expression<ast::constraint>(
                 ast::constraint::relation::neq,
                 ast::integer(store, 0),
                 ast::integer(store, 0)
+            );
+
+            constraints.add(expr);
+
+            expect(!constraints.check_consistency()) << "for a single constraint:" << expr->to_string();
+        };
+
+        should("var == var is consistent") = [&] () {
+            constraint::set constraints;
+
+            auto expr = store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq,
+                ast::var(store, "foo"),
+                ast::var(store, "foo")
+            );
+
+            constraints.add(expr);
+
+            expect(constraints.check_consistency()) << "for a single constraint:" << expr->to_string();
+        };
+
+        should("var != var is inconsistent") = [&] () {
+            constraint::set constraints;
+
+            auto expr = store.make_expression<ast::constraint>(
+                ast::constraint::relation::neq,
+                ast::var(store, "bar"),
+                ast::var(store, "bar")
+            );
+
+            constraints.add(expr);
+
+            expect(!constraints.check_consistency()) << "for a single constraint:" << expr->to_string();
+        };
+
+        should("foo + bar == foo is consistent") = [&] () {
+            constraint::set constraints;
+
+            auto expr = store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq,
+                ast::add(store,
+                    ast::var(store, "foo"), ast::var(store, "bar")
+                ),
+                ast::var(store, "foo")
+            );
+
+            constraints.add(expr);
+
+            expect(constraints.check_consistency()) << "for a single constraint:" << expr->to_string();
+        };
+
+        should("foo + 0 == foo + 1 is inconsistent") = [&] () {
+            constraint::set constraints;
+
+            auto expr = store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq,
+                ast::add(store,
+                    ast::var(store, "foo"), ast::integer(store, 0)
+                ),
+                ast::add(store,
+                    ast::var(store, "foo"), ast::integer(store, 1)
+                )
             );
 
             constraints.add(expr);
