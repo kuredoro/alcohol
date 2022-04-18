@@ -47,6 +47,12 @@ add_component(ast_statements
     TEST src/ast/statements.test.cpp)
 target_link_libraries(ast_statements PUBLIC CONAN_PKG::gsl-lite util_for_each_argument util_indent_text ast_manager ast_expressions)
 
+add_component(constraint_set
+    HEADER src/constraint/set.hpp
+    IMPL src/constraint/set.cpp
+    TEST src/constraint/set.test.cpp)
+target_link_libraries(constraint_set PUBLIC CONAN_PKG::gsl-lite ast_expressions)
+
 add_component(address_expr_collector
     HEADER src/linter/address_expr_collector.hpp
     IMPL src/linter/address_expr_collector.cpp
