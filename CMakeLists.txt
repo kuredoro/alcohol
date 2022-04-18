@@ -39,7 +39,7 @@ add_component(ast_expressions
     HEADER src/ast/expressions.hpp
     IMPL src/ast/expressions.cpp
     TEST src/ast/expressions.test.cpp)
-target_link_libraries(ast_expressions PUBLIC ast_manager)
+target_link_libraries(ast_expressions PUBLIC CONAN_PKG::boost ast_manager)
 
 add_component(ast_statements
     HEADER src/ast/statements.hpp

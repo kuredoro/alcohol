@@ -2,7 +2,8 @@
 
 #include <ast/manager.hpp>
 
-#include <boost/mp11.hpp>
+#include <boost/mp11/integral.hpp>
+#include <boost/mp11/utility.hpp>
 
 #include <string>
 #include <memory>
