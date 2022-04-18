@@ -190,6 +190,7 @@ struct expression_visitor
     virtual void process(integer&) = 0;
     virtual void process(add&) = 0;
     virtual void process(multiply&) = 0;
+    virtual void process(constraint&) = 0;
 };
 
 template <class X, class SubType>

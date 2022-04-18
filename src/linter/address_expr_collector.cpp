@@ -31,7 +31,7 @@ struct var_collector : public ast::expression_visitor
 {
     void process(ast::expression& expr) override
     {
-        throw std::runtime_error("var_collector: encountered an unknown statement type");
+        throw std::runtime_error("var_collector: encountered an unknown statement type (" + expr.to_string() + ")");
     }
 
     void process(ast::var& var) override
@@ -54,6 +54,12 @@ struct var_collector : public ast::expression_visitor
     {
         product.left()->accept(*this);
         product.right()->accept(*this);
+    }
+
+    void process(ast::constraint& constraint) override
+    {
+        // TODO: maybe redirect by default?
+        process(static_cast<ast::expression&>(constraint));
     }
 
     gsl::span<ast::var*> vars()
