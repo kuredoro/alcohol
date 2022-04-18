@@ -146,6 +146,27 @@ int main()
 
             expect(constraints.check_consistency()) << "for a single constraint:" << expr->to_string();
         };
+
+        should("foo == foo && 42 == 42 is consistent") = [&] () {
+            constraint::set constraints;
+
+            auto expr1 = store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq,
+                ast::var(store, "foo"),
+                ast::var(store, "bar")
+            );
+
+            auto expr2 = store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq,
+                ast::integer(store, 42),
+                ast::integer(store, 42)
+            );
+
+            constraints.add(expr1);
+            constraints.add(expr2);
+
+            expect(constraints.check_consistency()) << "for 2 constraints:" << expr1->to_string() << " && " << expr2->to_string() << '\n';
+        };
     };
 
     return 0;
