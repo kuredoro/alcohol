@@ -152,10 +152,32 @@ int main()
         },
     };
 
-    "default constructed"_test = [] () {
+    "default constructed"_test = [&] () {
         should("is consistent") = [&] () {
             constraint::set constraints;
             expect(constraints.check_consistency());
+        };
+
+        should("satisfies satisfiable constraint") = [&] () {
+            constraint::set constraints;
+
+            expect(constraints.check_satisfiability_of(
+                store.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq,
+                    ast::integer(store, 1),
+                    ast::integer(store, 1)
+            )));
+        };
+
+        should("unsatisfies unsatisfiable constraint") = [&] () {
+            constraint::set constraints;
+
+            expect(constraints.check_satisfiability_of(
+                store.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq,
+                    ast::integer(store, 0),
+                    ast::integer(store, 1)
+            )));
         };
     };
 
