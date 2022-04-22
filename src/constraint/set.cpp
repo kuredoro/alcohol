@@ -36,6 +36,30 @@ bool set::check_consistency() const
     }
 }
 
+bool set::check_satisfiability_of(ast::constraint* target) const
+{
+    z3::context ctx;
+    z3::solver solver(ctx);
+
+    for (auto& c : constraints_)
+    {
+        solver.add(to_z3_form(ctx, c));
+    }
+
+    solver.add(!to_z3_form(ctx, target));
+
+    switch (solver.check())
+    {
+    case z3::sat:
+        return false;
+    case z3::unsat:
+        return true;
+    default:
+        throw std::runtime_error("constraint_set: satisfiable_with: z3 failed");
+        return false;
+    }
+}
+
 z3::expr to_z3_form(z3::context& c, ast::expression* expr)
 {
     detail::to_z3_form_visitor visitor(c);

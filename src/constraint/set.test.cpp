@@ -12,6 +12,13 @@ struct consistency_test_case
     std::vector<ast::constraint*> constraints;
 };
 
+struct satisfiability_test_case
+{
+    bool wantSatisfiability;
+    std::vector<ast::constraint*> constraints;
+    ast::constraint* target;
+};
+
 int main()
 {
     ast::manager store;
@@ -152,6 +159,87 @@ int main()
         },
     };
 
+    std::vector<satisfiability_test_case> satisfiabilityCases{
+        {
+            true,
+            {
+                store.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq,
+                    ast::var(store, "foo"),
+                    ast::integer(store, 1)
+                ),
+            },
+            store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq,
+                ast::add(store,
+                    ast::var(store, "foo"), ast::integer(store, 1)
+                ),
+                ast::integer(store, 2)
+            ),
+        },
+        {
+            false,
+            {
+                store.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq,
+                    ast::var(store, "foo"),
+                    ast::integer(store, 1)
+                ),
+            },
+            store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq,
+                ast::add(store,
+                    ast::var(store, "foo"), ast::integer(store, 1)
+                ),
+                ast::integer(store, 0)
+            ),
+        },
+        {
+            true,
+            {
+                store.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq,
+                    ast::var(store, "foo"),
+                    ast::integer(store, 1)
+                ),
+                store.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq,
+                    ast::var(store, "foo"),
+                    ast::integer(store, 2)
+                ),
+            },
+            store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq,
+                ast::add(store,
+                    ast::var(store, "foo"), ast::integer(store, 1)
+                ),
+                ast::integer(store, 0)
+            ),
+        },
+        {
+            true,
+            {
+                store.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq,
+                    ast::var(store, "foo"),
+                    ast::integer(store, 1)
+                ),
+                store.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq,
+                    ast::var(store, "bar"),
+                    ast::integer(store, 2)
+                ),
+            },
+            store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq,
+                ast::add(store,
+                    ast::var(store, "foo"), ast::var(store, "bar")
+                ),
+                ast::integer(store, 3)
+            ),
+        },
+    };
+
     "default constructed"_test = [&] () {
         should("is consistent") = [&] () {
             constraint::set constraints;
@@ -166,7 +254,7 @@ int main()
                     ast::constraint::relation::eq,
                     ast::integer(store, 1),
                     ast::integer(store, 1)
-            )));
+            )) == true);
         };
 
         should("unsatisfies unsatisfiable constraint") = [&] () {
@@ -177,7 +265,7 @@ int main()
                     ast::constraint::relation::eq,
                     ast::integer(store, 0),
                     ast::integer(store, 1)
-            )));
+            )) == false);
         };
     };
 
@@ -212,6 +300,42 @@ int main()
                 }
 
                 expect(constraints.check_consistency() == testCase.wantConsistent);
+            };
+        }
+    };
+
+    "satisfiability"_test = [&] () {
+        // TODO: range-v3
+        for (auto& testCase : satisfiabilityCases)
+        {
+            std::string testName = testCase.target->to_string();
+
+            if (testCase.wantSatisfiability)
+            {
+                testName += " is satisfiable with ";
+            }
+            else
+            {
+                testName += " is unsatisfiable with ";
+            }
+
+            for (size_t i = 0; i < testCase.constraints.size(); i++)
+            {
+                if (i != 0)
+                    testName += " && ";
+
+                testName += testCase.constraints[i]->to_string();
+            }
+
+            should(testName) = [&] () {
+                constraint::set constraints;
+
+                for (auto& constraint : testCase.constraints)
+                {
+                    constraints.add(constraint);
+                }
+
+                expect(constraints.check_satisfiability_of(testCase.target) == testCase.wantSatisfiability);
             };
         }
     };
