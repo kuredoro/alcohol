@@ -65,10 +65,20 @@ private:
 struct add final : public visitable_expression<add>
 {
     // TODO: add concepts
-    template <class LHS, class RHS>
+    template <
+        class LHS,
+        class RHS,
+        bool = mp_if_c<!std::is_pointer_v<LHS>, mp_true, void>::value,
+        bool = mp_if_c<!std::is_pointer_v<RHS>, mp_true, void>::value
+    >
     add(manager& store, LHS&& left, RHS&& right) :
         left_(store.acquire_expression(std::forward<LHS>(left))),
         right_(store.acquire_expression(std::forward<RHS>(right)))
+    {}
+
+    add(manager& store, ast::expression* left, ast::expression* right) :
+        left_(left),
+        right_(right)
     {}
 
     std::string to_string() const override
@@ -94,10 +104,20 @@ private:
 struct multiply final : public visitable_expression<multiply>
 {
     // TODO: add concepts
-    template <class LHS, class RHS>
+    template <
+        class LHS,
+        class RHS,
+        bool = mp_if_c<!std::is_pointer_v<LHS>, mp_true, void>::value,
+        bool = mp_if_c<!std::is_pointer_v<RHS>, mp_true, void>::value
+    >
     multiply(manager& store, LHS&& left, RHS&& right) :
         left_(store.acquire_expression(std::forward<LHS>(left))),
         right_(store.acquire_expression(std::forward<RHS>(right)))
+    {}
+
+    multiply(manager& store, ast::expression* left, ast::expression* right) :
+        left_(left),
+        right_(right)
     {}
 
     std::string to_string() const override
