@@ -27,15 +27,15 @@ int main()
 
     std::cout << "\n";
 
-    std::cout << std::boolalpha << "a1 == a2: " << (a1 == a2) << "\n";
-    std::cout << std::boolalpha << "b == a2: " << (b == a2) << "\n";
-    std::cout << std::boolalpha << "a1 == b: " << (a1 == b) << "\n";
+    std::cout << std::boolalpha << "a1 == a2: " << store.same(&a1, &a2) << "\n";
+    std::cout << std::boolalpha << "b == a2: " << store.same(&b, &a2) << "\n";
+    std::cout << std::boolalpha << "a1 == b: " << store.same(&a1, &b) << "\n";
 
     std::cout << "\n";
 
-    std::cout << std::boolalpha << "a1 != a2: " << (a1 != a2) << "\n";
-    std::cout << std::boolalpha << "b != a2: " << (b != a2) << "\n";
-    std::cout << std::boolalpha << "a1 != b: " << (a1 != b) << "\n";
+    std::cout << std::boolalpha << "a1 != a2: " << !store.same(&a1, &a2) << "\n";
+    std::cout << std::boolalpha << "b != a2: " << !store.same(&b, &a2) << "\n";
+    std::cout << std::boolalpha << "a1 != b: " << !store.same(&a1, &b) << "\n";
 
     auto eq = store.make_expression<ast::constraint>(ast::constraint::relation::eq, &a1, &b);
     std::cout << eq->to_string() << '\n';

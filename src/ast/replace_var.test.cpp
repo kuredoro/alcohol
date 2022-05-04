@@ -40,7 +40,7 @@ int main()
             auto targetVar = store.make_expression<ast::var>(testCase.varName);
             auto got = ast::replace_var(store, testCase.input, targetVar, testCase.with);
 
-            expect(got->to_string() == testCase.want->to_string()) << "got" << got->to_string() << "but want" << testCase.want->to_string();
+            expect(store.same(got, testCase.want)) << "got" << got->to_string() << "but want" << testCase.want->to_string();
         };
     }
 

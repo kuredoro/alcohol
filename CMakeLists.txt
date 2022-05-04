@@ -33,7 +33,8 @@ add_component(util_indent_text
     IMPL src/util/indent_text.cpp)
 
 add_component(ast_manager
-    HEADER src/ast/manager.hpp)
+    HEADER src/ast/manager.hpp
+    IMPL src/ast/manager.cpp)
 
 add_component(ast_expressions
     HEADER src/ast/expressions.hpp
