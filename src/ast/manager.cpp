@@ -3,7 +3,7 @@
 namespace ast
 {
 
-bool manager::same(ast::expression* a, ast::expression* b) const
+bool manager::same(const ast::expression* a, const ast::expression* b) const
 {
     return a->to_string() == b->to_string();
 }
