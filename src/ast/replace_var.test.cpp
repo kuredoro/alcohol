@@ -1,3 +1,4 @@
+#include "ast/expressions.hpp"
 #include "ast/manager.hpp"
 #include <boost/ut.hpp>
 
@@ -59,6 +60,48 @@ int main()
             store.make_expression<ast::add>(
                 ast::var(store, "foo"),
                 ast::var(store, "zap")
+            ),
+        },
+        {
+            // input
+            store.make_expression<ast::multiply>(
+                ast::var(store, "foo"),
+                ast::var(store, "bar")
+            ),
+            "foo",
+            store.make_expression<ast::var>("bar"),
+
+            // want
+            store.make_expression<ast::multiply>(
+                ast::var(store, "bar"),
+                ast::var(store, "bar")
+            ),
+        },
+        {
+            // input
+            store.make_expression<ast::add>(
+                ast::multiply(store,
+                    ast::integer(store, 42),
+                    ast::var(store, "foo")
+                ),
+                ast::var(store, "bar")
+            ),
+            "foo",
+            store.make_expression<ast::add>(
+                ast::var(store, "bar"),
+                ast::var(store, "zap")
+            ),
+
+            // want
+            store.make_expression<ast::add>(
+                ast::multiply(store,
+                    ast::integer(store, 42),
+                    ast::add(store,
+                        ast::var(store, "bar"),
+                        ast::var(store, "zap")
+                    )
+                ),
+                ast::var(store, "bar")
             ),
         },
     };
