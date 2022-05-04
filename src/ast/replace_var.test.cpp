@@ -37,6 +37,15 @@ int main()
             // want
             store.make_expression<ast::var>("bar"),
         },
+        {
+            // input
+            store.make_expression<ast::var>("foo"),
+            "bar",
+            store.make_expression<ast::var>("zap"),
+
+            // want
+            store.make_expression<ast::var>("foo"),
+        },
     };
 
     for (auto& testCase : cases)
