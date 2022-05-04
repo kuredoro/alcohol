@@ -41,6 +41,12 @@ add_component(ast_expressions
     TEST src/ast/expressions.test.cpp)
 target_link_libraries(ast_expressions PUBLIC CONAN_PKG::boost ast_manager)
 
+add_component(ast_replace_var
+    HEADER src/ast/replace_var.hpp
+    IMPL src/ast/replace_var.cpp
+    TEST src/ast/replace_var.test.cpp)
+target_link_libraries(ast_replace_var PUBLIC CONAN_PKG::boost ast_manager ast_expressions)
+
 add_component(ast_statements
     HEADER src/ast/statements.hpp
     IMPL src/ast/statements.cpp
