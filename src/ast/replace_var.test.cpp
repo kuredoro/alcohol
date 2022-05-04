@@ -20,12 +20,23 @@ int main()
 
     std::vector<test_case> cases{
         {
+            // input
             store.make_expression<ast::integer>(42),
             "foo",
             store.make_expression<ast::var>("bar"),
 
+            // want
             store.make_expression<ast::integer>(42),
-        }
+        },
+        {
+            // input
+            store.make_expression<ast::var>("foo"),
+            "foo",
+            store.make_expression<ast::var>("bar"),
+
+            // want
+            store.make_expression<ast::var>("bar"),
+        },
     };
 
     for (auto& testCase : cases)
