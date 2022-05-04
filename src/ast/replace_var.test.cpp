@@ -46,6 +46,21 @@ int main()
             // want
             store.make_expression<ast::var>("foo"),
         },
+        {
+            // input
+            store.make_expression<ast::add>(
+                ast::var(store, "foo"),
+                ast::var(store, "bar")
+            ),
+            "bar",
+            store.make_expression<ast::var>("zap"),
+
+            // want
+            store.make_expression<ast::add>(
+                ast::var(store, "foo"),
+                ast::var(store, "zap")
+            ),
+        },
     };
 
     for (auto& testCase : cases)
