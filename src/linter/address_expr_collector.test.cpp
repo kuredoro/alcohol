@@ -32,7 +32,7 @@ std::string to_string(const Container& exprs)
 }
 
 template <class Container>
-bool assert_no_duplicates(const Container& exprs)
+bool assert_no_duplicates(ast::manager& store, const Container& exprs)
 {
     std::vector<int> eqClasses(exprs.size(), -1);
 
@@ -47,7 +47,7 @@ bool assert_no_duplicates(const Container& exprs)
         size_t dupCount = 0;
         for (size_t j = i + 1; j < exprs.size(); j++)
         {
-            if (exprs[i]->to_string() == exprs[j]->to_string())
+            if (store.same(exprs[i], exprs[j]))
             {
                 eqClasses[j] = i;
                 dupCount++;
@@ -71,11 +71,11 @@ template <
     class ContainerB,
     bool = std::is_base_of<ast::expression, typename ContainerA::value_type>::value,
     bool = std::is_base_of<ast::expression, typename ContainerB::value_type>::value>
-bool assert_expression_sets(const ContainerA& got, const ContainerB& want)
+bool assert_expression_sets(ast::manager& store, const ContainerA& got, const ContainerB& want)
 {
     bool gotIsSet = true, wantIsSet = true;
-    expect(gotIsSet = assert_no_duplicates(got)) << "but it should contain only unique expressions";
-    expect(wantIsSet = assert_no_duplicates(want)) << "the test case is flawed (!!!)";
+    expect(gotIsSet = assert_no_duplicates(store, got)) << "but it should contain only unique expressions";
+    expect(wantIsSet = assert_no_duplicates(store, want)) << "the test case is flawed (!!!)";
 
     if (!wantIsSet)
         return false;
@@ -494,8 +494,8 @@ int main()
                     auto gotVars = collector.address_variables();
                     auto gotExprs = collector.address_expressions();
 
-                    expect(assert_expression_sets(gotVars, testCase.wantVars)) << "while asserting found address variables";
-                    expect(assert_expression_sets(gotExprs, testCase.wantExprs)) << "while asserting found address expressions";
+                    expect(assert_expression_sets(store, gotVars, testCase.wantVars)) << "while asserting found address variables";
+                    expect(assert_expression_sets(store, gotExprs, testCase.wantExprs)) << "while asserting found address expressions";
                 };   
             }
         };

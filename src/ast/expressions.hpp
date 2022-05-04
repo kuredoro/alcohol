@@ -200,9 +200,4 @@ void visitable_expression<X, SubType>::accept(expression_visitor& visitor)
     visitor.process(static_cast<X&>(*this));
 }
 
-bool operator==(const expression& left, const expression& right);
-bool operator!=(const expression& left, const expression& right);
-
-expression* replace_variable(manager& store, expression* expr, const std::string& var, const expression* withExpr);
-
 };

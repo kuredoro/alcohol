@@ -14,11 +14,11 @@
 using namespace boost::mp11;
 
 template <class ExpressionA, class ExpressionB>
-void push_back_if_absent(std::vector<ExpressionA*>& exprs, ExpressionB* newItem)
+void push_back_if_absent(ast::manager& store, std::vector<ExpressionA*>& exprs, ExpressionB* newItem)
 {
     for (auto& item : exprs)
     {
-        if (*item == *newItem)
+        if (store.same(item, newItem))
         {
             return;
         }
@@ -110,7 +110,7 @@ void address_expr_collector::process(ast::decl& decl)
         for (size_t i = 1; i < sourceVarAllocSize; i++)
         {
             auto root = astStore_.make_expression<ast::add>(ast::var(astStore_, decl.variable()->name()), ast::integer(astStore_, i));
-            push_back_if_absent(addrExprs_, root);
+            push_back_if_absent(astStore_, addrExprs_, root);
         }
     }
 
@@ -121,8 +121,8 @@ void address_expr_collector::process(ast::decl& decl)
         {
             if (var->name() == addrVar->name())
             {
-                push_back_if_absent(addrVars_, decl.variable());
-                push_back_if_absent(addrExprs_, decl.variable());
+                push_back_if_absent(astStore_, addrVars_, decl.variable());
+                push_back_if_absent(astStore_, addrExprs_, decl.variable());
                 return;
             }
         }
@@ -162,8 +162,8 @@ void address_expr_collector::process(ast::assign& assignment)
         {
             if (addrVar->name() == var->name())
             {
-                push_back_if_absent(addrVars_, assignment.destination());
-                push_back_if_absent(addrExprs_, assignment.destination());
+                push_back_if_absent(astStore_, addrVars_, assignment.destination());
+                push_back_if_absent(astStore_, addrExprs_, assignment.destination());
                 return;
             }
         }
@@ -172,8 +172,8 @@ void address_expr_collector::process(ast::assign& assignment)
 
 void address_expr_collector::process(ast::alloc& alloc)
 {
-    push_back_if_absent(addrVars_, alloc.destination_var());
-    push_back_if_absent(addrExprs_, alloc.destination_var());
+    push_back_if_absent(astStore_, addrVars_, alloc.destination_var());
+    push_back_if_absent(astStore_, addrExprs_, alloc.destination_var());
 
     varAllocSizes_[alloc.destination_var()->name()] = alloc.alloc_size();
 
@@ -181,40 +181,40 @@ void address_expr_collector::process(ast::alloc& alloc)
     {
         // TODO: test manager not to return nullptrs...
         auto root = astStore_.make_expression<ast::add>(ast::var(astStore_, alloc.destination_var()->name()), ast::integer(astStore_, i));
-        push_back_if_absent(addrExprs_, root);
+        push_back_if_absent(astStore_, addrExprs_, root);
     }
 }
 
 void address_expr_collector::process(ast::store& store)
 {
     auto destPlace = store.destination();
-    push_back_if_absent(addrExprs_, destPlace);
+    push_back_if_absent(astStore_, addrExprs_, destPlace);
 
     auto vars = collect_variables(destPlace);
     for (auto& var : vars)
     {
-        push_back_if_absent(addrVars_,var);
-        push_back_if_absent(addrExprs_, var);
+        push_back_if_absent(astStore_, addrVars_,var);
+        push_back_if_absent(astStore_, addrExprs_, var);
     }
 }
 
 void address_expr_collector::process(ast::load& load)
 {
     auto sourcePlace = load.source();
-    push_back_if_absent(addrExprs_, sourcePlace);
+    push_back_if_absent(astStore_, addrExprs_, sourcePlace);
     
     auto vars = collect_variables(sourcePlace);
     for (auto& var : vars)
     {
-        push_back_if_absent(addrVars_, var);
-        push_back_if_absent(addrExprs_, var);
+        push_back_if_absent(astStore_, addrVars_, var);
+        push_back_if_absent(astStore_, addrExprs_, var);
     }
 }
 
 void address_expr_collector::process(ast::dispose& dispose)
 {
-    push_back_if_absent(addrVars_, dispose.target_var());
-    push_back_if_absent(addrExprs_, dispose.target_var());
+    push_back_if_absent(astStore_, addrVars_, dispose.target_var());
+    push_back_if_absent(astStore_, addrExprs_, dispose.target_var());
 }
 
 void address_expr_collector::process(ast::if_else& ifElse)

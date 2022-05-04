@@ -106,6 +106,8 @@ struct manager
         return ptr;
     }
 
+    bool same(ast::expression* a, ast::expression* b) const;
+
 private:
     std::vector<std::unique_ptr<ast::statement>> statements_;
     std::vector<std::unique_ptr<ast::expression>> expressions_;
