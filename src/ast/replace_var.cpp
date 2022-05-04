@@ -1,3 +1,4 @@
+#include "ast/expressions.hpp"
 #include "ast/manager.hpp"
 #include <ast/replace_var.hpp>
 
@@ -24,13 +25,11 @@ struct replace_var_visitor : public ast::expression_visitor
         }
 
         result = with_;
-        return;
     }
 
     void process(ast::integer& integer) override
     {
         result = &integer;
-        return;
     }
 
     void process(ast::add& sum) override
@@ -45,11 +44,22 @@ struct replace_var_visitor : public ast::expression_visitor
         }
 
         result = store_.make_expression<ast::add>(replacedLeft, replacedRight);
-        return;
-        
     }
 
-    void process(ast::multiply&) override {}
+    void process(ast::multiply& product) override
+    {
+        auto replacedLeft = replace_var(store_, product.left(), target_, with_);
+        auto replacedRight = replace_var(store_, product.right(), target_, with_);
+
+        if (store_.same(replacedLeft, product.left()) && store_.same(replacedRight, product.right()))
+        {
+            result = &product;
+            return;
+        }
+
+        result = store_.make_expression<ast::multiply>(replacedLeft, replacedRight);
+    }
+
     void process(ast::constraint&) override {}
 
     ast::expression* result;
