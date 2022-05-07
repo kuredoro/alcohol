@@ -2,6 +2,7 @@
 #include <ast/manager.hpp>
 #include <ast/statements.hpp>
 #include <ast/expressions.hpp>
+#include <linter/linter.hpp>
 #include <iostream>
 
 int main()
@@ -24,8 +25,9 @@ int main()
             ast::dispose(store, "y")
         );
 
+    linter::linter linter(store);
 
-    std::cout << "Program:\n" << empty.to_string() << "\n\nLinter:\n";
+    linter.process(empty);
 
     return 0;
 }
