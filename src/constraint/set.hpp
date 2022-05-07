@@ -4,6 +4,8 @@
 
 #include <z3++.h>
 
+#include <string>
+
 namespace constraint
 {
 
@@ -12,6 +14,8 @@ struct set
     void add(ast::constraint*);
     bool check_satisfiability_of(ast::constraint*) const;
     bool check_consistency() const;
+
+    std::string to_string() const;
 
 private:
     std::vector<ast::constraint*> constraints_;
