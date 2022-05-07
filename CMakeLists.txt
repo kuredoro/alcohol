@@ -67,12 +67,20 @@ target_link_libraries(address_expr_collector PUBLIC
     ast_expressions
 )
 
+add_component(linter_configuration src/linter/configuration)
+target_link_libraries(linter_configuration PUBLIC
+    ast_manager
+    ast_statements
+    constraint_set
+)
+
 add_component(linter src/linter/linter)
 target_link_libraries(linter PUBLIC
     ast_manager
     ast_statements
     ast_expressions
     address_expr_collector
+    linter_configuration
 )
 
 ## 
