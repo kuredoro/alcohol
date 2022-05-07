@@ -9,6 +9,18 @@
 namespace constraint
 {
 
+std::string set::to_string() const
+{
+    std::string text;
+    for (const auto& c : constraints_)
+    {
+        text += c->to_string();
+        text += "\n";
+    }
+
+    return text;
+}
+
 void set::add(ast::constraint* expr)
 {
     constraints_.push_back(expr);
