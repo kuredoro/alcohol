@@ -21,56 +21,59 @@ set(BUILD_PLUGIN ON CACHE BOOL "Try to find LLVM and build clang plugin")
 ## Defining libraries
 ##
 
-add_component(util_for_each_argument
-    HEADER src/util/for_each_argument.hpp)
+add_component(util_for_each_argument src/util/for_each_argument)
 target_link_libraries(util_for_each_argument INTERFACE CONAN_PKG::boost)
 
-add_component(util_unique_from_ref
-    HEADER src/util/make_unique_from_ref.hpp)
+add_component(util_unique_from_ref src/util/make_unique_from_ref)
 
-add_component(util_indent_text
-    HEADER src/util/indent_text.hpp
-    IMPL src/util/indent_text.cpp)
+add_component(util_indent_text src/util/indent_text)
 
-add_component(ast_manager
-    HEADER src/ast/manager.hpp
-    IMPL src/ast/manager.cpp)
+add_component(ast_manager src/ast/manager)
 
-add_component(ast_expressions
-    HEADER src/ast/expressions.hpp
-    IMPL src/ast/expressions.cpp
-    TEST src/ast/expressions.test.cpp)
-target_link_libraries(ast_expressions PUBLIC CONAN_PKG::boost ast_manager)
+add_component(ast_expressions src/ast/expressions)
+target_link_libraries(ast_expressions PUBLIC
+    CONAN_PKG::boost
+    ast_manager
+)
 
-add_component(ast_replace_var
-    HEADER src/ast/replace_var.hpp
-    IMPL src/ast/replace_var.cpp
-    TEST src/ast/replace_var.test.cpp)
-target_link_libraries(ast_replace_var PUBLIC CONAN_PKG::boost ast_manager ast_expressions)
+add_component(ast_replace_var src/ast/replace_var)
+target_link_libraries(ast_replace_var PUBLIC
+    CONAN_PKG::boost
+    ast_manager
+    ast_expressions
+)
 
-add_component(ast_statements
-    HEADER src/ast/statements.hpp
-    IMPL src/ast/statements.cpp
-    TEST src/ast/statements.test.cpp)
-target_link_libraries(ast_statements PUBLIC CONAN_PKG::gsl-lite util_for_each_argument util_indent_text ast_manager ast_expressions)
+add_component(ast_statements src/ast/statements)
+target_link_libraries(ast_statements PUBLIC
+    CONAN_PKG::gsl-lite
+    util_for_each_argument
+    util_indent_text
+    ast_manager
+    ast_expressions
+)
 
-add_component(constraint_set
-    HEADER src/constraint/set.hpp
-    IMPL src/constraint/set.cpp
-    TEST src/constraint/set.test.cpp)
-target_link_libraries(constraint_set PUBLIC CONAN_PKG::gsl-lite CONAN_PKG::z3 ast_expressions)
+add_component(constraint_set src/constraint/set)
+target_link_libraries(constraint_set PUBLIC
+    CONAN_PKG::gsl-lite
+    CONAN_PKG::z3
+    ast_expressions
+)
 
-add_component(address_expr_collector
-    HEADER src/linter/address_expr_collector.hpp
-    IMPL src/linter/address_expr_collector.cpp
-    TEST src/linter/address_expr_collector.test.cpp)
-target_link_libraries(address_expr_collector PUBLIC CONAN_PKG::gsl-lite ast_manager ast_statements ast_expressions)
+add_component(address_expr_collector src/linter/address_expr_collector)
+target_link_libraries(address_expr_collector PUBLIC
+    CONAN_PKG::gsl-lite
+    ast_manager
+    ast_statements
+    ast_expressions
+)
 
-add_component(linter
-    HEADER src/linter/linter.hpp
-    IMPL src/linter/linter.cpp
-    TEST src/linter/linter.test.cpp)
-target_link_libraries(linter PUBLIC ast_manager ast_statements ast_expressions address_expr_collector)
+add_component(linter src/linter/linter)
+target_link_libraries(linter PUBLIC
+    ast_manager
+    ast_statements
+    ast_expressions
+    address_expr_collector
+)
 
 ## 
 ## LLVM setup

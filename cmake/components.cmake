@@ -22,6 +22,26 @@ function(add_component name)
     set(multi_value_keywords)
     cmake_parse_arguments(PARSE_ARGV 1 file "${options}" "${one_value_keywords}" "${multi_value_keywords}")
 
+    if (NOT DEFINED file_HEADER AND
+        NOT DEFINED file_IMPL AND
+        NOT DEFINED file_TEST AND
+        DEFINED file_UNPARSED_ARGUMENTS)
+
+        list(GET file_UNPARSED_ARGUMENTS 0 root_path)
+
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${root_path}.hpp")
+            set(file_HEADER "${root_path}.hpp")
+        endif()
+
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${root_path}.cpp")
+            set(file_IMPL "${root_path}.cpp")
+        endif()
+
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${root_path}.test.cpp")
+            set(file_TEST "${root_path}.test.cpp")
+        endif()
+    endif()
+
     if(NOT DEFINED file_HEADER)
         message(FATAL "add_component: HEADER argument missing. add_component should always be called with the HEADER and TEST arguments. Example: add_component(foo HEADER foo.h IMPL foo.cpp TEST foo.test.cpp)")
     endif()
