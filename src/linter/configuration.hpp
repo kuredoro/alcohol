@@ -13,11 +13,11 @@ namespace linter
 struct configuration
 {
 
-    bool check_reachability_from(const configuration& old) const;
+    bool check_reachability_from(ast::manager& store, ast::var* from, ast::expression* to) /*const*/;
 
     bool add_var(ast::var*);
     bool remove_var(ast::var*);
-    void add_array_constraints_for(ast::var*, size_t elemCount);
+    void add_array_constraints_for(ast::manager&, ast::var*, size_t elemCount);
     void replace(ast::var* from, ast::expression* to);
 
     std::string to_string() const;
@@ -26,6 +26,7 @@ private:
     std::set<std::string> currentVars_;
     std::set<ast::expression*> currentAddressExprs_;
     constraint::set constraints_;
+    std::vector<ast::expression*> current_address_exprs(ast::manager& store);
 };
 
 }

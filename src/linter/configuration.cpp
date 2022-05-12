@@ -1,3 +1,8 @@
+#include <constraint/set.hpp>
+#include <ast/manager.hpp>
+#include <ast/expressions.hpp>
+#include <ast/replace_var.hpp>
+#include <ast/has_var.hpp>
 #include <linter/configuration.hpp>
 
 namespace linter
@@ -36,24 +41,87 @@ std::string configuration::to_string() const
     return text;
 }
 
-bool configuration::check_reachability_from(const configuration& old) const
+std::vector<ast::expression*> configuration::current_address_exprs(ast::manager& store)
 {
+    std::vector<ast::expression*> allExprs;
+    for (auto& c : constraints_.get())
+    {
+        allExprs.push_back(c->left());
+        allExprs.push_back(c->right());
+    }
+
+    for (size_t i = 0; i < allExprs.size(); i++)
+    {
+        if (allExprs[i] == nullptr)
+            continue;
+
+        for (size_t j = i + 1; j < allExprs.size(); j++)
+        {
+            if (store.same(allExprs[i], allExprs[j]))
+            {
+                allExprs[j] = nullptr;
+            }
+        }
+    }
+
+    std::vector<ast::expression*> exprs;
+    for (const auto& e : allExprs)
+    {
+        if (e == nullptr)
+            continue;
+
+        exprs.push_back(e);
+    }
+
+    return exprs;
+}
+
+bool configuration::check_reachability_from(ast::manager& store, ast::var* from, ast::expression* to)
     return true;
 }
 
 bool configuration::add_var(ast::var* var)
 {
     currentVars_.insert(var->name());
+    currentAddressExprs_.insert(var);
     return true;
 }
 
 bool configuration::remove_var(ast::var* var)
 {
     currentVars_.erase(var->name());
-    return true;
+
+    auto it = currentAddressExprs_.begin();
+    while (it != currentAddressExprs_.end())
+    {
+        if (ast::has_var(*it, var))
+        {
+            it = currentAddressExprs_.erase(it);
+            continue;
+        }
+        
+        ++it;
+    }
+
+    bool oneRemoved = false;
+
+    constraint::set newSet;
+    for (auto& c : constraints_.get())
+    {
+        if (ast::has_var(c, var))
+        {
+            oneRemoved = true;
+            continue;
+        }
+
+        newSet.add(c);
+    }
+
+    constraints_ = newSet;
+    return oneRemoved;
 }
 
-void configuration::add_array_constraints_for(ast::var*, size_t elemCount)
+void configuration::add_array_constraints_for(ast::manager& store, ast::var* var, size_t elemCount)
 {
 
 }
