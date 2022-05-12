@@ -6,11 +6,16 @@
 #include <ast/expressions.hpp>
 #include <linter/linter.hpp>
 #include <iostream>
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
 
 using namespace boost::ut;
 
 int main()
 {
+    spdlog::set_pattern("%H:%M:%S %^%l%$ %v");
+    spdlog::set_level(spdlog::level::trace);
+
     ast::manager store;
 
     auto testOn = [&store](std::string name, ast::block& block) {

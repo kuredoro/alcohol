@@ -5,6 +5,7 @@
 #include <ast/has_var.hpp>
 #include <linter/linter.hpp>
 #include <linter/configuration.hpp>
+#include <spdlog/spdlog.h>
 
 namespace linter
 {
@@ -93,7 +94,7 @@ bool configuration::check_reachability_from(ast::manager& store, ast::var* from,
             );
 
             bool result = constraints_.check_satisfiability_of(eq);
-            std::cout << "        Checking reachibility of " << eq->to_string() << " :: " << !result << "\n";
+            spdlog::trace("        Checking reachibility of {} :: {}", eq->to_string(), !result);
 
             reachable = reachable && !result;
             if (!reachable)

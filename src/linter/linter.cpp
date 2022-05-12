@@ -2,8 +2,8 @@
 #include <ast/manager.hpp>
 #include <ast/replace_var.hpp>
 #include <ast/statements.hpp>
-#include <iomanip>
 #include <linter/linter.hpp>
+#include <spdlog/spdlog.h>
 
 namespace linter
 {
@@ -25,8 +25,7 @@ struct linter_visitor : public ast::statement_visitor
         {
             stmt->accept(*this);
 
-            std::cout << "  " << stmt->to_string();
-            std::cout << linter_.cnf_.to_string() << "\n";
+            spdlog::info("\n  {}{}\n", stmt->to_string(), linter_.cnf_.to_string());
         }
     }
 
@@ -69,7 +68,7 @@ struct linter_visitor : public ast::statement_visitor
                 );
 
                 bool valid = linter_.cnf_.constraints().check_satisfiability_of(eq);
-                std::cout << "      Trying to prove " << eq->to_string() << " :: " << std::boolalpha << valid << '\n';
+                spdlog::trace("      Trying to prove {} :: {}", eq->to_string(), valid);
                 if (valid)
                 {
                     newSet.add(linter_.astStore_.make_expression<ast::constraint>(
@@ -83,7 +82,8 @@ struct linter_visitor : public ast::statement_visitor
                 );
 
                 valid = linter_.cnf_.constraints().check_satisfiability_of(neq);
-                std::cout << "      Trying to prove " << neq->to_string() << " :: " << std::boolalpha << valid << '\n';
+                spdlog::trace("      Trying to prove {} :: {}", neq->to_string(), valid);
+
                 if (valid)
                 {
                     newSet.add(linter_.astStore_.make_expression<ast::constraint>(
@@ -97,7 +97,7 @@ struct linter_visitor : public ast::statement_visitor
         auto reachable = linter_.cnf_.check_reachability_from(linter_.astStore_, assignment.destination(), assignment.value());
         if (!reachable)
         {
-            std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Memory leak detected\n";
+            spdlog::error("Memory leak detected");
         }
         
         linter_.cnf_.constraints(newSet);
@@ -139,7 +139,7 @@ struct linter_visitor : public ast::statement_visitor
                 );
 
                 bool valid = augmentedConstraints.constraints().check_satisfiability_of(eq);
-                std::cout << "      Trying to prove " << eq->to_string() << " :: " << std::boolalpha << valid << '\n';
+                spdlog::trace("      Trying to prove {} :: {}", eq->to_string(), valid);
                 if (valid)
                 {
                     newConstraints.add(linter_.astStore_.make_expression<ast::constraint>(
@@ -153,7 +153,7 @@ struct linter_visitor : public ast::statement_visitor
                 );
 
                 valid = augmentedConstraints.constraints().check_satisfiability_of(neq);
-                std::cout << "      Trying to prove " << neq->to_string() << " :: " << std::boolalpha << valid << '\n';
+                spdlog::trace("      Trying to prove {} :: {}", neq->to_string(), valid);
                 if (valid)
                 {
                     newConstraints.add(linter_.astStore_.make_expression<ast::constraint>(
@@ -185,7 +185,7 @@ struct linter_visitor : public ast::statement_visitor
         bool removed = linter_.cnf_.remove_var(dispose.target_var());
         if (!removed)
         {
-            std::cout << "!!!!!!!!!!!!!!!! Double free of " << dispose.target_var()->name() << "\n";
+            spdlog::error("Double free of {}", dispose.target_var()->name());
         }
     }
 
@@ -207,19 +207,19 @@ void linter::process(ast::block& block)
 {
     block.accept(exprStat_);
 
-    std::cout << "ADDR VARS: ";
+    spdlog::info("ADDR VARS: ");
     for (auto& v : exprStat_.address_variables())
     {
-        std::cout << v->to_string() << " ";
+        spdlog::info("{}", v->to_string());
     }
 
-    std::cout << "\nADDR EXPRS: ";
+    spdlog::info("ADDR EXPRS: ");
     for (auto& e : exprStat_.address_expressions())
     {
-        std::cout << e->to_string() << ", ";
+        spdlog::info("{}", e->to_string());
     }
 
-    std::cout << "\n------\n";
+    spdlog::info("-----");
 
     linter_visitor v(*this);
     block.accept(v);
