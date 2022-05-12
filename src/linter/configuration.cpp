@@ -77,6 +77,32 @@ std::vector<ast::expression*> configuration::current_address_exprs(ast::manager&
 }
 
 bool configuration::check_reachability_from(ast::manager& store, ast::var* from, ast::expression* to)
+{
+    auto currentExprs = current_address_exprs(store);
+
+    bool hasLeak = false;
+    for (auto& e1 : currentExprs)
+    {
+        bool reachable = true;
+        for (auto& e2 : currentExprs)
+        {
+            auto e2Replaced = ast::replace_var(store, e2, from, to);
+            auto eq = store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq, e1, e2Replaced
+            );
+
+            bool result = constraints_.check_satisfiability_of(eq);
+            std::cout << "        Checking reachibility of " << eq->to_string() << " :: " << !result << "\n";
+
+            reachable = reachable && !result;
+            if (!reachable)
+                break;
+        }
+
+        if (!reachable)
+            return false;
+    }
+
     return true;
 }
 
