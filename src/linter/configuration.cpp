@@ -3,6 +3,7 @@
 #include <ast/expressions.hpp>
 #include <ast/replace_var.hpp>
 #include <ast/has_var.hpp>
+#include <linter/linter.hpp>
 #include <linter/configuration.hpp>
 
 namespace linter
@@ -149,7 +150,44 @@ bool configuration::remove_var(ast::var* var)
 
 void configuration::add_array_constraints_for(ast::manager& store, ast::var* var, size_t elemCount)
 {
+    // Array elements do not equal to any other known address expressions.
+    for (size_t i = 0; i < elemCount; i++)
+    {
+        ast::expression* elemAddr = var;
+        if (i != 0)
+        {
+            elemAddr = store.make_expression<ast::add>(var, store.make_expression<ast::integer>(i));
+        }
 
+        for (auto& e : currentAddressExprs_)
+        {
+            constraints_.add(store.make_expression<ast::constraint>(
+                ast::constraint::relation::neq,
+                elemAddr, e
+            ));
+        }
+    }
+
+    // Array elements are distinct from each other.
+    for (size_t l = 0; l < elemCount; l++)
+    {
+        for (size_t r = l + 1; r < elemCount; r++)
+        {
+            ast::expression* leftAddr = var;
+            if (l != 0)
+            {
+                leftAddr = store.make_expression<ast::add>(var, store.make_expression<ast::integer>(l));
+            }
+
+            // TODO: the template constructor fails if the underlying types are two different ast::expression derivatives
+            ast::expression* rightAddr = store.make_expression<ast::add>(var, store.make_expression<ast::integer>(r));
+
+            constraints_.add(store.make_expression<ast::constraint>(
+                ast::constraint::relation::neq,
+                leftAddr, rightAddr
+            ));
+        }
+    }
 }
 
 void configuration::replace(ast::var* from, ast::expression* to)
