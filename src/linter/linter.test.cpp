@@ -17,6 +17,7 @@ int main()
         test(name) = [&]() {
             std::cout << "#######\n";
             std::cout << "RUNNING " << name << "\n";
+            std::cout << block.to_string();
             std::cout << "####### \n\n";
 
             linter::linter linter(store);
@@ -50,8 +51,34 @@ int main()
             ast::dispose(store, "x")
         );
 
+    auto indirectDoubleDispose =
+        ast::block(store,
+            ast::alloc(store, "x", 2),
+            ast::store(store, ast::var(store, "x"), ast::integer(store, 1)),
+            ast::store(store, ast::add(store, ast::var(store, "x"), ast::integer(store, 1)), ast::integer(store, 3)),
+
+            ast::decl(store, "y", ast::integer(store, 0)),
+            ast::assign(store, "y", ast::var(store, "x")),
+
+            ast::dispose(store, "x"),
+            ast::dispose(store, "y")
+        );
+
+    auto overwrite =
+        ast::block(store,
+            ast::alloc(store, "x", 2),
+            ast::store(store, ast::var(store, "x"), ast::integer(store, 1)),
+            ast::store(store, ast::add(store, ast::var(store, "x"), ast::integer(store, 1)), ast::integer(store, 3)),
+
+            ast::assign(store, "x", ast::integer(store, 0)),
+
+            ast::dispose(store, "x")
+        );
+
     testOn("empty", empty);
     testOn("direct_double_dispose", directDoubleDispose);
+    testOn("indirect_double_dispose", indirectDoubleDispose);
+    testOn("overwrite", overwrite);
 
     return 0;
 }
