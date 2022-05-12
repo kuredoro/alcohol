@@ -50,8 +50,57 @@ struct linter_visitor : public ast::statement_visitor
         // TODO
 
         // Required: just replace the variable with expression
+        linter_.cnf_.replace(assignment.destination(), assignment.value());
+
+        constraint::set newSet;
+        auto addrExprs = linter_.exprStat_.address_expressions();
+        for (size_t i = 0; i < addrExprs.size(); i++)
+        {
+            auto& e1 = addrExprs[i];
+            for (size_t j = i; j < addrExprs.size(); j++)
+            {
+                auto& e2 = addrExprs[j];
+
+                auto e1Replaced = ast::replace_var(linter_.astStore_, e1, assignment.destination(), assignment.value());
+                auto e2Replaced = ast::replace_var(linter_.astStore_, e2, assignment.destination(), assignment.value());
+
+                auto eq = linter_.astStore_.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq, e1Replaced, e2Replaced
+                );
+
+                bool valid = linter_.cnf_.constraints().check_satisfiability_of(eq);
+                std::cout << "      Trying to prove " << eq->to_string() << " :: " << std::boolalpha << valid << '\n';
+                if (valid)
+                {
+                    newSet.add(linter_.astStore_.make_expression<ast::constraint>(
+                        ast::constraint::relation::eq, e1, e2
+                    ));
+                    continue;
+                }
+
+                auto neq = linter_.astStore_.make_expression<ast::constraint>(
+                    ast::constraint::relation::neq, e1Replaced, e2Replaced
+                );
+
+                valid = linter_.cnf_.constraints().check_satisfiability_of(neq);
+                std::cout << "      Trying to prove " << neq->to_string() << " :: " << std::boolalpha << valid << '\n';
+                if (valid)
+                {
+                    newSet.add(linter_.astStore_.make_expression<ast::constraint>(
+                        ast::constraint::relation::neq, e1, e2
+                    ));
+                    continue;
+                }
+            }
+        }
+
+        auto reachable = linter_.cnf_.check_reachability_from(linter_.astStore_, assignment.destination(), assignment.value());
+        if (!reachable)
+        {
+            std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Memory leak detected\n";
+        }
         
-        // BONUS: check reachability
+        linter_.cnf_.constraints(newSet);
     }
 
     void process(ast::alloc& alloc) override
