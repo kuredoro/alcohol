@@ -5,6 +5,10 @@
 #include <ast/expressions.hpp>
 #include <constraint/set.hpp>
 #include <linter/address_expr_collector.hpp>
+#include <linter/configuration.hpp>
+
+#include <set>
+#include <vector>
 
 namespace linter
 {
@@ -26,6 +30,11 @@ private:
     ast::manager& astStore_;
     std::vector<std::string> diagnostics_;
     address_expr_collector exprStat_;
+
+    // Our only configuration for now
+    configuration cnf_;
+
+    friend struct linter_visitor;
 };
 
 }

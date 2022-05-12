@@ -43,7 +43,7 @@ target_link_libraries(ast_replace_var PUBLIC
     ast_expressions
 )
 
-add_component(ast_replace_var src/ast/has_var)
+add_component(ast_has_var src/ast/has_var)
 target_link_libraries(ast_has_var PUBLIC
     CONAN_PKG::boost
     ast_manager
@@ -78,6 +78,8 @@ add_component(linter_configuration src/linter/configuration)
 target_link_libraries(linter_configuration PUBLIC
     ast_manager
     ast_statements
+    ast_has_var
+    ast_replace_var
     constraint_set
 )
 
@@ -87,7 +89,6 @@ target_link_libraries(linter PUBLIC
     ast_statements
     ast_expressions
     ast_replace_var
-    ast_has_var
     address_expr_collector
     linter_configuration
 )
