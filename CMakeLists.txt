@@ -76,6 +76,7 @@ target_link_libraries(address_expr_collector PUBLIC
 
 add_component(linter_configuration src/linter/configuration)
 target_link_libraries(linter_configuration PUBLIC
+    CONAN_PKG::spdlog
     ast_manager
     ast_statements
     ast_has_var
@@ -85,6 +86,7 @@ target_link_libraries(linter_configuration PUBLIC
 
 add_component(linter src/linter/linter)
 target_link_libraries(linter PUBLIC
+    CONAN_PKG::spdlog
     ast_manager
     ast_statements
     ast_expressions
