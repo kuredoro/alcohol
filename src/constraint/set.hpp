@@ -3,6 +3,7 @@
 #include <ast/expressions.hpp>
 
 #include <z3++.h>
+#include <gsl/gsl-lite.hpp>
 
 #include <string>
 
@@ -16,6 +17,10 @@ struct set
     bool check_consistency() const;
 
     std::string to_string() const;
+
+    gsl::span<ast::constraint*> get() {
+        return constraints_;
+    }
 
 private:
     std::vector<ast::constraint*> constraints_;
