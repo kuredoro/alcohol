@@ -85,7 +85,7 @@ bool configuration::check_reachability_from(ast::manager& store, ast::var* from,
     bool hasLeak = false;
     for (auto& e1 : currentExprs)
     {
-        bool reachable = true;
+        bool reachable = false;
         for (auto& e2 : currentExprs)
         {
             auto e2Replaced = ast::replace_var(store, e2, from, to);
@@ -93,19 +93,23 @@ bool configuration::check_reachability_from(ast::manager& store, ast::var* from,
                 ast::constraint::relation::eq, e1, e2Replaced
             );
 
-            bool result = constraints_.check_satisfiability_of(eq);
-            spdlog::trace("        Checking reachibility of {} :: {}", eq->to_string(), !result);
+            reachable = constraints_.check_satisfiability_of(eq);
+            spdlog::trace("        Checking reachibility of {} :: {}", eq->to_string(), reachable);
 
-            reachable = reachable && !result;
-            if (!reachable)
+            if (reachable)
                 break;
         }
 
+        spdlog::trace("old expression {} is reachable? {}", e1->to_string(), reachable);
+
+        hasLeak = hasLeak || !reachable;
+        /*
         if (!reachable)
             return false;
+            */
     }
 
-    return true;
+    return !hasLeak; //true;
 }
 
 bool configuration::add_var(ast::var* var)
