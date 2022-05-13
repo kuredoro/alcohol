@@ -41,6 +41,12 @@ struct linter_visitor : public ast::statement_visitor
         // the constraint set only if the variable was declared prior.
 
         linter_.cnf_.add_var(decl.variable());
+
+        auto assignmentPart = linter_.astStore_.make_statement<ast::assign>(
+            decl.variable()->name(), decl.value()
+        );
+
+        assignmentPart->accept(*this);
     }
 
     void process(ast::assign& assignment) override
@@ -97,7 +103,7 @@ struct linter_visitor : public ast::statement_visitor
         auto reachable = linter_.cnf_.check_reachability_from(linter_.astStore_, assignment.destination(), assignment.value());
         if (!reachable)
         {
-            spdlog::error("Memory leak detected");
+            spdlog::debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Memory leak detected");
         }
         
         linter_.cnf_.constraints(newSet);
@@ -185,7 +191,7 @@ struct linter_visitor : public ast::statement_visitor
         bool removed = linter_.cnf_.remove_var(dispose.target_var());
         if (!removed)
         {
-            spdlog::error("Double free of {}", dispose.target_var()->name());
+            spdlog::debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Double free of {}", dispose.target_var()->name());
         }
     }
 
