@@ -1,12 +1,41 @@
+#include "ast/collect_vars.hpp"
 #include <ast/expressions.hpp>
 #include <ast/manager.hpp>
 #include <ast/replace_var.hpp>
+#include <ast/collect_vars.hpp>
 #include <ast/statements.hpp>
 #include <linter/linter.hpp>
 #include <spdlog/spdlog.h>
 
 namespace linter
 {
+
+std::vector<ast::expression*> filter_expressions_with_vars(const gsl::span<ast::expression*> exprs, const std::set<std::string>& wantVars)
+{
+    std::vector<ast::expression*> filteredExprs;
+
+    for (auto& e : exprs)
+    {
+        auto exprVars = ast::collect_vars(e);
+        
+        bool hasUnwantedVars = false;
+        for (const auto& var : exprVars)
+        {
+            bool found = wantVars.find(var->name()) != wantVars.end();
+            hasUnwantedVars = hasUnwantedVars || !found;
+
+            if (hasUnwantedVars)
+                break;
+        }
+
+        if (hasUnwantedVars)
+            continue;
+
+        filteredExprs.push_back(e);
+    }
+
+    return filteredExprs;
+}
 
 struct linter_visitor : public ast::statement_visitor
 {
@@ -58,7 +87,7 @@ struct linter_visitor : public ast::statement_visitor
         linter_.cnf_.replace(assignment.destination(), assignment.value());
 
         constraint::set newSet;
-        auto addrExprs = linter_.exprStat_.address_expressions();
+        auto addrExprs = filter_expressions_with_vars(linter_.exprStat_.address_expressions(), linter_.cnf_.current_vars());
         for (size_t i = 0; i < addrExprs.size(); i++)
         {
             auto& e1 = addrExprs[i];
@@ -129,7 +158,7 @@ struct linter_visitor : public ast::statement_visitor
         augmentedConstraints.add_array_constraints_for(linter_.astStore_, tmpVar, alloc.alloc_size());
 
         constraint::set newConstraints;
-        auto addrExprs = linter_.exprStat_.address_expressions();
+        auto addrExprs = filter_expressions_with_vars(linter_.exprStat_.address_expressions(), linter_.cnf_.current_vars());
         for (size_t i = 0; i < addrExprs.size(); i++)
         {
             auto& e1 = addrExprs[i];
