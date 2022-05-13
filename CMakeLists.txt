@@ -21,42 +21,42 @@ set(BUILD_PLUGIN ON CACHE BOOL "Try to find LLVM and build clang plugin")
 ## Defining libraries
 ##
 
-add_component(util_for_each_argument src/util/for_each_argument)
+add_component(util_for_each_argument src/alc/util/for_each_argument)
 target_link_libraries(util_for_each_argument INTERFACE CONAN_PKG::boost)
 
-add_component(util_unique_from_ref src/util/make_unique_from_ref)
+add_component(util_unique_from_ref src/alc/util/make_unique_from_ref)
 
-add_component(util_indent_text src/util/indent_text)
+add_component(util_indent_text src/alc/util/indent_text)
 
-add_component(ast_manager src/ast/manager)
+add_component(ast_manager src/alc/ast/manager)
 
-add_component(ast_expressions src/ast/expressions)
+add_component(ast_expressions src/alc/ast/expressions)
 target_link_libraries(ast_expressions PUBLIC
     CONAN_PKG::boost
     ast_manager
 )
 
-add_component(ast_replace_var src/ast/replace_var)
+add_component(ast_replace_var src/alc/ast/replace_var)
 target_link_libraries(ast_replace_var PUBLIC
     CONAN_PKG::boost
     ast_manager
     ast_expressions
 )
 
-add_component(ast_has_var src/ast/has_var)
+add_component(ast_has_var src/alc/ast/has_var)
 target_link_libraries(ast_has_var PUBLIC
     CONAN_PKG::boost
     ast_manager
     ast_expressions
 )
 
-add_component(ast_collect_vars src/ast/collect_vars)
+add_component(ast_collect_vars src/alc/ast/collect_vars)
 target_link_libraries(ast_collect_vars PUBLIC
     CONAN_PKG::gsl-lite
     ast_expressions
 )
 
-add_component(ast_statements src/ast/statements)
+add_component(ast_statements src/alc/ast/statements)
 target_link_libraries(ast_statements PUBLIC
     CONAN_PKG::gsl-lite
     util_for_each_argument
@@ -65,14 +65,14 @@ target_link_libraries(ast_statements PUBLIC
     ast_expressions
 )
 
-add_component(constraint_set src/constraint/set)
+add_component(constraint_set src/alc/constraint/set)
 target_link_libraries(constraint_set PUBLIC
     CONAN_PKG::gsl-lite
     CONAN_PKG::z3
     ast_expressions
 )
 
-add_component(address_expr_collector src/linter/address_expr_collector)
+add_component(address_expr_collector src/alc/linter/address_expr_collector)
 target_link_libraries(address_expr_collector PUBLIC
     CONAN_PKG::gsl-lite
     ast_manager
@@ -81,7 +81,7 @@ target_link_libraries(address_expr_collector PUBLIC
     ast_collect_vars
 )
 
-add_component(linter_configuration src/linter/configuration)
+add_component(linter_configuration src/alc/linter/configuration)
 target_link_libraries(linter_configuration PUBLIC
     CONAN_PKG::spdlog
     ast_manager
@@ -91,7 +91,7 @@ target_link_libraries(linter_configuration PUBLIC
     constraint_set
 )
 
-add_component(linter src/linter/linter)
+add_component(linter src/alc/linter/linter)
 target_link_libraries(linter PUBLIC
     CONAN_PKG::spdlog
     ast_manager
@@ -146,14 +146,20 @@ if (BUILD_PLUGIN)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
     endif()
     
-    add_library(alcohol SHARED
-        src/plugin/AlcoholPluginAction.hpp
-        src/plugin/AlcoholPluginAction.cpp
-        src/plugin/Main.cpp
+    #add_library(alcohol SHARED
+    add_llvm_library(alcohol MODULE
+        src/alc/plugin/AlcoholPluginAction.hpp
+        src/alc/plugin/AlcoholPluginAction.cpp
+        src/alc/plugin/Main.cpp
+        PLUGIN_TOOL clang
     )
     
-    # Allow undefined symbols in shared objects on Darwin (this is the default
-    # behaviour on Linux)
-    target_link_libraries(alcohol
-      "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>")
+    target_link_libraries(alcohol PUBLIC
+        ast_manager
+        ast_statements
+
+        # Allow undefined symbols in shared objects on Darwin (this is the default
+        # behaviour on Linux)
+        "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>"
+    )
 endif()
