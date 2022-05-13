@@ -43,11 +43,11 @@ struct MatchMemoryDeallocationCallback : public MatchFinder::MatchCallback
 
 struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor>
 {
-  explicit AftFuncDeclVisitor(const clang::ASTContext* ctx) : m_ctx(ctx), m_sm(ctx->getSourceManager())
+  explicit AftFuncDeclVisitor(const clang::ASTContext* ctx) : ctx_(ctx), sm_(ctx->getSourceManager())
   {
-    m_matcher = std::make_unique<MatchFinder>();  
+    matcher_ = std::make_unique<MatchFinder>();  
 
-    m_allocCb = std::make_unique<MatchMemoryAllocationCallback>();
+    allocCb_ = std::make_unique<MatchMemoryAllocationCallback>();
     auto allocPattern =
         declStmt(
             hasSingleDecl(varDecl(
@@ -59,7 +59,7 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
             ))
         );
 
-    m_deallocCb = std::make_unique<MatchMemoryDeallocationCallback>();
+    deallocCb_ = std::make_unique<MatchMemoryDeallocationCallback>();
     auto deallocPattern =
         callExpr(
             hasDeclaration(functionDecl(
@@ -67,8 +67,8 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
             ))
         );
 
-    m_matcher->addMatcher(allocPattern, m_allocCb.get());
-    m_matcher->addMatcher(deallocPattern, m_deallocCb.get());
+    matcher_->addMatcher(allocPattern, allocCb_.get());
+    matcher_->addMatcher(deallocPattern, deallocCb_.get());
   }
 
   bool TraverseFunctionDecl(const clang::FunctionDecl* funcDecl)
@@ -87,7 +87,7 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
   {
     for (auto* stmt : stmts->body())
     {
-      m_matcher->match(*stmt, *const_cast<ASTContext*>(m_ctx));
+      matcher_->match(*stmt, *const_cast<ASTContext*>(ctx_));
       llvm::outs() << "STMT\n";
       //TraverseStmt(stmt);
     }
@@ -96,12 +96,12 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
   }
   
 private:
-  std::unique_ptr<MatchFinder> m_matcher;
+  std::unique_ptr<MatchFinder> matcher_;
   //std::unique_ptr<MatchFinder::MatchCallback> m_dataDeclCb, m_ptrDeclCb;
-  std::unique_ptr<MatchFinder::MatchCallback> m_allocCb, m_deallocCb;
+  std::unique_ptr<MatchFinder::MatchCallback> allocCb_, deallocCb_;
 
-  const ASTContext* m_ctx;
-  const SourceManager& m_sm;
+  const ASTContext* ctx_;
+  const SourceManager& sm_;
 };
 
 /*
