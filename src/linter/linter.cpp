@@ -37,6 +37,53 @@ std::vector<ast::expression*> filter_expressions_with_vars(const gsl::span<ast::
     return filteredExprs;
 }
 
+constraint::set infer_after_replacement(ast::manager& store, const constraint::set& constraints, const gsl::span<ast::expression*> addrExprs, ast::var* from, ast::expression* to)
+{
+    constraint::set newSet;
+    for (size_t i = 0; i < addrExprs.size(); i++)
+    {
+        auto& e1 = addrExprs[i];
+        for (size_t j = i; j < addrExprs.size(); j++)
+        {
+            auto& e2 = addrExprs[j];
+
+            auto e1Replaced = ast::replace_var(store, e1, from, to);
+            auto e2Replaced = ast::replace_var(store, e2, from, to);
+
+            auto eq = store.make_expression<ast::constraint>(
+                ast::constraint::relation::eq, e1Replaced, e2Replaced
+            );
+
+            bool valid = constraints.check_satisfiability_of(eq);
+            spdlog::trace("      Trying to prove {} :: {}", eq->to_string(), valid);
+            if (valid)
+            {
+                newSet.add(store.make_expression<ast::constraint>(
+                    ast::constraint::relation::eq, e1, e2
+                ));
+                continue;
+            }
+
+            auto neq = store.make_expression<ast::constraint>(
+                ast::constraint::relation::neq, e1Replaced, e2Replaced
+            );
+
+            valid = constraints.check_satisfiability_of(neq);
+            spdlog::trace("      Trying to prove {} :: {}", neq->to_string(), valid);
+
+            if (valid)
+            {
+                newSet.add(store.make_expression<ast::constraint>(
+                    ast::constraint::relation::neq, e1, e2
+                ));
+                continue;
+            }
+        }
+    }
+
+    return newSet;
+}
+
 struct linter_visitor : public ast::statement_visitor
 {
     linter_visitor(linter& linter) :
@@ -86,48 +133,8 @@ struct linter_visitor : public ast::statement_visitor
         // Required: just replace the variable with expression
         linter_.cnf_.replace(assignment.destination(), assignment.value());
 
-        constraint::set newSet;
         auto addrExprs = filter_expressions_with_vars(linter_.exprStat_.address_expressions(), linter_.cnf_.current_vars());
-        for (size_t i = 0; i < addrExprs.size(); i++)
-        {
-            auto& e1 = addrExprs[i];
-            for (size_t j = i; j < addrExprs.size(); j++)
-            {
-                auto& e2 = addrExprs[j];
-
-                auto e1Replaced = ast::replace_var(linter_.astStore_, e1, assignment.destination(), assignment.value());
-                auto e2Replaced = ast::replace_var(linter_.astStore_, e2, assignment.destination(), assignment.value());
-
-                auto eq = linter_.astStore_.make_expression<ast::constraint>(
-                    ast::constraint::relation::eq, e1Replaced, e2Replaced
-                );
-
-                bool valid = linter_.cnf_.constraints().check_satisfiability_of(eq);
-                spdlog::trace("      Trying to prove {} :: {}", eq->to_string(), valid);
-                if (valid)
-                {
-                    newSet.add(linter_.astStore_.make_expression<ast::constraint>(
-                        ast::constraint::relation::eq, e1, e2
-                    ));
-                    continue;
-                }
-
-                auto neq = linter_.astStore_.make_expression<ast::constraint>(
-                    ast::constraint::relation::neq, e1Replaced, e2Replaced
-                );
-
-                valid = linter_.cnf_.constraints().check_satisfiability_of(neq);
-                spdlog::trace("      Trying to prove {} :: {}", neq->to_string(), valid);
-
-                if (valid)
-                {
-                    newSet.add(linter_.astStore_.make_expression<ast::constraint>(
-                        ast::constraint::relation::neq, e1, e2
-                    ));
-                    continue;
-                }
-            }
-        }
+        auto newSet = infer_after_replacement(linter_.astStore_, linter_.cnf_.constraints(), addrExprs, assignment.destination(), assignment.value());
 
         auto reachable = linter_.cnf_.check_reachability_from(linter_.astStore_, assignment.destination(), assignment.value());
         if (!reachable)
@@ -153,53 +160,13 @@ struct linter_visitor : public ast::statement_visitor
         static size_t tmpCount = 1;
         auto tmpVar = linter_.astStore_.make_expression<ast::var>("@" + std::to_string(tmpCount++));
 
-
         auto augmentedConstraints = linter_.cnf_;
         augmentedConstraints.add_array_constraints_for(linter_.astStore_, tmpVar, alloc.alloc_size());
 
-        constraint::set newConstraints;
         auto addrExprs = filter_expressions_with_vars(linter_.exprStat_.address_expressions(), linter_.cnf_.current_vars());
-        for (size_t i = 0; i < addrExprs.size(); i++)
-        {
-            auto& e1 = addrExprs[i];
-            for (size_t j = i; j < addrExprs.size(); j++)
-            {
-                auto& e2 = addrExprs[j];
+        auto newSet = infer_after_replacement(linter_.astStore_, linter_.cnf_.constraints(), addrExprs, alloc.destination_var(), tmpVar);
 
-                auto e1Replaced = ast::replace_var(linter_.astStore_, e1, alloc.destination_var(), tmpVar);
-                auto e2Replaced = ast::replace_var(linter_.astStore_, e2, alloc.destination_var(), tmpVar);
-
-                auto eq = linter_.astStore_.make_expression<ast::constraint>(
-                    ast::constraint::relation::eq, e1Replaced, e2Replaced
-                );
-
-                bool valid = augmentedConstraints.constraints().check_satisfiability_of(eq);
-                spdlog::trace("      Trying to prove {} :: {}", eq->to_string(), valid);
-                if (valid)
-                {
-                    newConstraints.add(linter_.astStore_.make_expression<ast::constraint>(
-                        ast::constraint::relation::eq, e1, e2
-                    ));
-                    continue;
-                }
-
-                auto neq = linter_.astStore_.make_expression<ast::constraint>(
-                    ast::constraint::relation::neq, e1Replaced, e2Replaced
-                );
-
-                valid = augmentedConstraints.constraints().check_satisfiability_of(neq);
-                spdlog::trace("      Trying to prove {} :: {}", neq->to_string(), valid);
-                if (valid)
-                {
-                    newConstraints.add(linter_.astStore_.make_expression<ast::constraint>(
-                        ast::constraint::relation::neq, e1, e2
-                    ));
-                    continue;
-                }
-            }
-        }
-
-        linter_.cnf_.constraints(newConstraints);
+        linter_.cnf_.constraints(newSet);
     }
 
     void process(ast::store&) override
