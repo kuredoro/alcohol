@@ -14,7 +14,7 @@ using namespace boost::ut;
 int main()
 {
     spdlog::set_pattern("%H:%M:%S %^%l%$ %v");
-    spdlog::set_level(spdlog::level::trace);
+    spdlog::set_level(spdlog::level::debug);
 
     ast::manager store;
 
@@ -69,6 +69,19 @@ int main()
             ast::dispose(store, "y")
         );
 
+    /*
+    auto disposeUnallocated =
+        ast::block(store,
+            ast::decl(store, "x", 0),
+            ast::store(store, ast::var(store, "x"), ast::integer(store, 1)),
+            ast::store(store, ast::add(store, ast::var(store, "x"), ast::integer(store, 1)), ast::integer(store, 3)),
+
+            ast::assign(store, "x", ast::integer(store, 0)),
+
+            ast::dispose(store, "x")
+        );
+        */
+
     auto overwrite =
         ast::block(store,
             ast::alloc(store, "x", 2),
@@ -80,10 +93,18 @@ int main()
             ast::dispose(store, "x")
         );
 
-    testOn("empty", empty);
-    testOn("direct_double_dispose", directDoubleDispose);
-    testOn("indirect_double_dispose", indirectDoubleDispose);
-    testOn("overwrite", overwrite);
+    struct test_case { std::string name; ast::block& code; };
+    std::vector<test_case> tests{
+        { "empty", empty },
+        { "direct_double_dispose", directDoubleDispose },
+        { "indirect_double_dispose", indirectDoubleDispose },
+        { "overwrite", overwrite },
+    };
+    
+    for (auto& t : tests)
+    {
+        testOn(t.name, t.code);
+    }
 
     return 0;
 }
