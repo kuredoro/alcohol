@@ -1,4 +1,4 @@
-#include "ast/manager.hpp"
+#include <ast/manager.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <typeinfo>
@@ -8,6 +8,7 @@
 #include <linter/address_expr_collector.hpp>
 #include <ast/expressions.hpp>
 #include <ast/statements.hpp>
+#include <ast/collect_vars.hpp>
 
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/mpl_list.hpp>
@@ -25,63 +26,6 @@ void push_back_if_absent(ast::manager& store, std::vector<ExpressionA*>& exprs, 
     }
 
     exprs.push_back(newItem);
-}
-
-struct var_collector : public ast::expression_visitor
-{
-    void process(ast::expression& expr) override
-    {
-        throw std::runtime_error("var_collector: encountered an unknown statement type (" + expr.to_string() + ")");
-    }
-
-    void process(ast::var& var) override
-    {
-        vars_.push_back(&var);
-    }
-
-    void process(ast::integer& number) override
-    {
-        // Do nothing
-    }
-
-    void process(ast::add& sum) override
-    {
-        sum.left()->accept(*this);
-        sum.right()->accept(*this);
-    }
-
-    void process(ast::multiply& product) override
-    {
-        product.left()->accept(*this);
-        product.right()->accept(*this);
-    }
-
-    void process(ast::constraint& constraint) override
-    {
-        // TODO: maybe redirect by default?
-        process(static_cast<ast::expression&>(constraint));
-    }
-
-    gsl::span<ast::var*> vars()
-    {
-        return vars_;
-    }
-
-    std::vector<ast::var*> move_vars()
-    {
-        return std::move(vars_);
-    }
-
-private:
-    std::vector<ast::var*> vars_;
-};
-
-std::vector<ast::var*> collect_variables(ast::expression* root)
-{
-    var_collector collector;
-    root->accept(collector);
-
-    return collector.move_vars();
 }
 
 namespace linter
@@ -114,7 +58,7 @@ void address_expr_collector::process(ast::decl& decl)
         }
     }
 
-    auto vars = collect_variables(decl.value());
+    auto vars = ast::collect_vars(decl.value());
     for (auto& var : vars)
     {
         for (auto& addrVar : addrVars_)
@@ -155,7 +99,7 @@ void address_expr_collector::process(ast::assign& assignment)
     }
 
     // Mark destination as an address variable if an expression contains an address variable
-    auto vars = collect_variables(assignment.value());
+    auto vars = ast::collect_vars(assignment.value());
     for (auto& var : vars)
     {
         for (auto& addrVar : addrVars_)
@@ -190,7 +134,7 @@ void address_expr_collector::process(ast::store& store)
     auto destPlace = store.destination();
     push_back_if_absent(astStore_, addrExprs_, destPlace);
 
-    auto vars = collect_variables(destPlace);
+    auto vars = ast::collect_vars(destPlace);
     for (auto& var : vars)
     {
         push_back_if_absent(astStore_, addrVars_,var);
@@ -203,7 +147,7 @@ void address_expr_collector::process(ast::load& load)
     auto sourcePlace = load.source();
     push_back_if_absent(astStore_, addrExprs_, sourcePlace);
     
-    auto vars = collect_variables(sourcePlace);
+    auto vars = ast::collect_vars(sourcePlace);
     for (auto& var : vars)
     {
         push_back_if_absent(astStore_, addrVars_, var);

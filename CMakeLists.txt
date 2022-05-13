@@ -50,6 +50,12 @@ target_link_libraries(ast_has_var PUBLIC
     ast_expressions
 )
 
+add_component(ast_collect_vars src/ast/collect_vars)
+target_link_libraries(ast_collect_vars PUBLIC
+    CONAN_PKG::gsl-lite
+    ast_expressions
+)
+
 add_component(ast_statements src/ast/statements)
 target_link_libraries(ast_statements PUBLIC
     CONAN_PKG::gsl-lite
@@ -72,6 +78,7 @@ target_link_libraries(address_expr_collector PUBLIC
     ast_manager
     ast_statements
     ast_expressions
+    ast_collect_vars
 )
 
 add_component(linter_configuration src/linter/configuration)
