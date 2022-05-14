@@ -53,10 +53,7 @@ struct MatchMemoryDeallocationCallback : public MatchCallbackWithVisitor
 {
     MatchMemoryDeallocationCallback(AftFuncDeclVisitor& v) : MatchCallbackWithVisitor(v) {}
 
-    void run(const MatchFinder::MatchResult& result) override
-    {
-        llvm::outs() << "Memory free!\n";
-    }
+    void run(const MatchFinder::MatchResult& result) override;
 };
 
 struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor>
@@ -80,13 +77,13 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
         declStmt(
             hasSingleDecl(varDecl(
                 hasDescendant(mallocPattern)
-            ).bind("decl"))
+            ).bind("varDecl"))
         );
 
     auto allocAssignPattern =
         binaryOperator(
             isAssignmentOperator(),
-            hasLHS(declRefExpr(hasDeclaration(varDecl().bind("decl")))),
+            hasLHS(declRefExpr(hasDeclaration(varDecl().bind("varDecl")))),
             hasRHS(hasDescendant(mallocPattern))
         );
 
@@ -95,7 +92,8 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
         callExpr(
             hasDeclaration(functionDecl(
                 hasName("free")
-            ))
+            )),
+            hasArgument(0, declRefExpr(hasDeclaration(varDecl().bind("varDecl"))))
         );
 
     matcher_->addMatcher(allocDeclPattern, allocCb_.get());
@@ -161,11 +159,25 @@ void MatchMemoryAllocationCallback::run(const MatchFinder::MatchResult& result)
 
     auto& nodes = result.Nodes;
 
-    auto decl = nodes.getNodeAs<VarDecl>("decl");
+    auto decl = nodes.getNodeAs<VarDecl>("varDecl");
     auto size = nodes.getNodeAs<IntegerLiteral>("size");
 
     auto& store = visitor.ast_store();
     auto alloc = store.make_statement<ast::alloc>(decl->getNameAsString(), size->getValue().getZExtValue());
 
     visitor.push_statement(alloc, {});
+}
+
+void MatchMemoryDeallocationCallback::run(const MatchFinder::MatchResult& result)
+{
+    llvm::outs() << "Memory free!\n";
+
+    auto& nodes = result.Nodes;
+
+    auto decl = nodes.getNodeAs<VarDecl>("varDecl");
+
+    auto& store = visitor.ast_store();
+    auto dispose = store.make_statement<ast::dispose>(decl->getNameAsString());
+
+    visitor.push_statement(dispose, {});
 }
