@@ -46,6 +46,10 @@ struct decl final : public visitable_statement<decl>
         var_(store.make_expression<ast::var>(varName)), expr_(store.acquire_expression(std::forward<Expression>(expr)))
     {}
 
+    decl(manager& store, const std::string& varName, expression* expr) :
+        var_(store.make_expression<ast::var>(varName)), expr_(expr)
+    {}
+
     std::string to_string() const override
     {
         return "let " + var_->name() + " := " + expr_->to_string() + "\n";
