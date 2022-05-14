@@ -50,8 +50,6 @@ ast::expression* to_alc_expression(ast::manager& store, const Expr* expr)
 
 void MatchMemoryAllocationCallback::run(const MatchFinder::MatchResult& result)
 {
-    llvm::outs() << "Memory alloc!\n";
-
     auto& nodes = result.Nodes;
 
     auto decl = nodes.getNodeAs<VarDecl>("varDecl");
@@ -60,13 +58,11 @@ void MatchMemoryAllocationCallback::run(const MatchFinder::MatchResult& result)
     auto& store = visitor.ast_store();
     auto alloc = store.make_statement<ast::alloc>(decl->getNameAsString(), size->getValue().getZExtValue());
 
-    visitor.push_statement(alloc, {});
+    visitor.push_statement(alloc, nodes.getNodeAs<Stmt>("root")->getBeginLoc());
 }
 
 void MatchMemoryDeallocationCallback::run(const MatchFinder::MatchResult& result)
 {
-    llvm::outs() << "Memory free!\n";
-
     auto& nodes = result.Nodes;
 
     auto decl = nodes.getNodeAs<VarDecl>("varDecl");
@@ -74,13 +70,11 @@ void MatchMemoryDeallocationCallback::run(const MatchFinder::MatchResult& result
     auto& store = visitor.ast_store();
     auto dispose = store.make_statement<ast::dispose>(decl->getNameAsString());
 
-    visitor.push_statement(dispose, {});
+    visitor.push_statement(dispose, nodes.getNodeAs<Stmt>("root")->getBeginLoc());
 }
 
 void MatchVariableDeclarationCallback::run(const MatchFinder::MatchResult& result)
 {
-    llvm::outs() << "Var decl!\n";
-
     auto& nodes = result.Nodes;
 
     auto varDecl = nodes.getNodeAs<VarDecl>("varDecl");
@@ -98,13 +92,11 @@ void MatchVariableDeclarationCallback::run(const MatchFinder::MatchResult& resul
 
     auto decl = store.make_statement<ast::decl>(varDecl->getNameAsString(), alcExpr);
 
-    visitor.push_statement(decl, {});
+    visitor.push_statement(decl, nodes.getNodeAs<Stmt>("root")->getBeginLoc());
 }
 
 void MatchStoreCallback::run(const MatchFinder::MatchResult& result)
 {
-    llvm::outs() << "Store!\n";
-
     auto& nodes = result.Nodes;
 
     auto varDecl = nodes.getNodeAs<VarDecl>("varDecl");
@@ -131,13 +123,11 @@ void MatchStoreCallback::run(const MatchFinder::MatchResult& result)
 
     auto storeStmt = store.make_statement<ast::store>(place, alcValue);
 
-    visitor.push_statement(storeStmt, {});
+    visitor.push_statement(storeStmt, nodes.getNodeAs<Stmt>("root")->getBeginLoc());
 }
 
 void MatchVariableAssignmentCallback::run(const MatchFinder::MatchResult& result)
 {
-    llvm::outs() << "Var assignment!\n";
-
     auto& nodes = result.Nodes;
 
     auto varDecl = nodes.getNodeAs<VarDecl>("varDecl");
@@ -155,5 +145,5 @@ void MatchVariableAssignmentCallback::run(const MatchFinder::MatchResult& result
 
     auto assign = store.make_statement<ast::assign>(varDecl->getNameAsString(), alcExpr);
 
-    visitor.push_statement(assign, {});
+    visitor.push_statement(assign, nodes.getNodeAs<Stmt>("root")->getBeginLoc());
 }

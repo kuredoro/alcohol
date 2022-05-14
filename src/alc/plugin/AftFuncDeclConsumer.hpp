@@ -106,14 +106,14 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
             hasSingleDecl(varDecl(
                 hasDescendant(mallocPattern)
             ).bind("varDecl"))
-        );
+        ).bind("root");
 
     auto allocAssignPattern =
         binaryOperator(
             isAssignmentOperator(),
             hasLHS(declRefExpr(hasDeclaration(varDecl().bind("varDecl")))),
             hasRHS(hasDescendant(mallocPattern))
-        );
+        ).bind("root");
     // TODO: find out if the order of `addMatcher` specifies the matcher priorities...
     matcher_->addMatcher(allocDeclPattern, allocCb_.get());
     matcher_->addMatcher(allocAssignPattern, allocCb_.get());
@@ -127,7 +127,7 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
                 hasName("free")
             )),
             hasArgument(0, declRefExpr(hasDeclaration(varDecl().bind("varDecl"))))
-        );
+        ).bind("root");
 
     matcher_->addMatcher(deallocPattern, deallocCb_.get());
 
@@ -139,7 +139,7 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
             hasSingleDecl(varDecl(
                 hasInitializer(newValuePattern("newValue"))
             ).bind("varDecl"))
-        );
+        ).bind("root");
 
     matcher_->addMatcher(varDeclPattern, declCb_.get());
 
@@ -151,7 +151,7 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
             isAssignmentOperator(),
             hasLHS(declRefExpr(hasDeclaration(varDecl().bind("varDecl")))),
             hasRHS(newValuePattern("newValue"))
-        );
+        ).bind("root");
 
     matcher_->addMatcher(varAssignPattern, varAssignCb_.get());
 
@@ -166,7 +166,7 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
                 hasIndex(newValuePattern("index"))
             )),
             hasRHS(newValuePattern("newValue"))
-        );
+        ).bind("root");
 
     matcher_->addMatcher(storePattern, storeCb_.get());
   }
