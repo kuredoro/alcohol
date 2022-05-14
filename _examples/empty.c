@@ -4,13 +4,16 @@
 int main()
 {
     int* x = 0;
-    int* y = 0;
+    int* y = 1;
 
     x = (int*)malloc(2 * sizeof(int));
 
+    int z = 1;
+    z = z;
+
     // Potential nullptr
-    x[0] = 1;
-    x[1] = 3;
+    x[0] = 2 * 2;
+    x[1] = 42 + 42 + 42 + 42;
 
     y = (int*)malloc(1 * sizeof(int));
 

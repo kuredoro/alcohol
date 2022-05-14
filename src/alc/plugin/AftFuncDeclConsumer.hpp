@@ -65,6 +65,22 @@ struct MatchVariableAssignmentCallback : public MatchCallbackWithVisitor
     void run(const MatchFinder::MatchResult& result) override;
 };
 
+struct MatchStoreCallback : public MatchCallbackWithVisitor
+{
+    MatchStoreCallback(AftFuncDeclVisitor& v) : MatchCallbackWithVisitor(v) {}
+
+    void run(const MatchFinder::MatchResult& result) override;
+};
+
+inline auto newValuePattern(std::string bindAs)
+{
+    return 
+        anyOf(
+            integerLiteral().bind(bindAs),
+            binaryOperator().bind(bindAs),
+            hasDescendant(declRefExpr(hasDeclaration(varDecl())).bind(bindAs))
+        );
+}
 
 struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor>
 {
@@ -134,14 +150,25 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
         binaryOperator(
             isAssignmentOperator(),
             hasLHS(declRefExpr(hasDeclaration(varDecl().bind("varDecl")))),
-            hasRHS(anyOf(
-                integerLiteral().bind("newValue"),
-                binaryOperator().bind("newValue"),
-                hasDescendant(declRefExpr(hasDeclaration(varDecl())).bind("newValue"))
-            ))
+            hasRHS(newValuePattern("newValue"))
         );
 
     matcher_->addMatcher(varAssignPattern, varAssignCb_.get());
+
+    // ---
+
+    storeCb_ = std::make_unique<MatchStoreCallback>(*this);
+    auto storePattern =
+        binaryOperator(
+            isAssignmentOperator(),
+            hasLHS(arraySubscriptExpr(
+                hasBase(hasDescendant(declRefExpr(hasDeclaration(varDecl().bind("varDecl"))))),
+                hasIndex(newValuePattern("index"))
+            )),
+            hasRHS(newValuePattern("newValue"))
+        );
+
+    matcher_->addMatcher(storePattern, storeCb_.get());
   }
 
   bool TraverseFunctionDecl(const clang::FunctionDecl* funcDecl)
@@ -186,7 +213,7 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
 private:
   std::unique_ptr<MatchFinder> matcher_;
   //std::unique_ptr<MatchFinder::MatchCallback> m_dataDeclCb, m_ptrDeclCb;
-  std::unique_ptr<MatchCallbackWithVisitor> allocCb_, deallocCb_, declCb_, varAssignCb_;
+  std::unique_ptr<MatchCallbackWithVisitor> allocCb_, deallocCb_, declCb_, varAssignCb_, storeCb_;
 
   ast::manager store_;
   std::vector<ast::statement*> mainStatements_;

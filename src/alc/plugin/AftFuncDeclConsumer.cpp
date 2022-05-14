@@ -101,6 +101,33 @@ void MatchVariableDeclarationCallback::run(const MatchFinder::MatchResult& resul
     visitor.push_statement(decl, {});
 }
 
+void MatchStoreCallback::run(const MatchFinder::MatchResult& result)
+{
+    llvm::outs() << "Store!\n";
+
+    auto& nodes = result.Nodes;
+
+    auto varDecl = nodes.getNodeAs<VarDecl>("varDecl");
+    auto index = nodes.getNodeAs<Expr>("index");
+    auto newValue = nodes.getNodeAs<Expr>("newValue");
+
+    auto& store = visitor.ast_store();
+    auto alcIndex = to_alc_expression(store, index);
+    auto alcValue = to_alc_expression(store, newValue);
+
+    if (!alcIndex || !alcValue)
+    {
+        llvm::outs() << "Unsupported expression:\n";
+        return;
+    }
+
+    ast::expression* destVar = store.make_expression<ast::var>(varDecl->getNameAsString());
+    ast::expression* place = store.make_expression<ast::add>(destVar, alcIndex);
+    auto storeStmt = store.make_statement<ast::store>(place, alcValue);
+
+    visitor.push_statement(storeStmt, {});
+}
+
 void MatchVariableAssignmentCallback::run(const MatchFinder::MatchResult& result)
 {
     llvm::outs() << "Var assignment!\n";
