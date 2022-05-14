@@ -210,6 +210,11 @@ struct block final : public visitable_statement<block>
         util::for_each_argument(insert, std::forward<Statements>(statements)...);
     }
 
+    block(manager& store, const gsl::span<statement*> statements)
+    {
+        statements_.insert(statements_.begin(), statements.begin(), statements.end());
+    }
+
     std::string to_string() const override
     {
         std::string result = "begin\n";
@@ -224,6 +229,11 @@ struct block final : public visitable_statement<block>
     gsl::span<statement* const> statements() const
     {
         return gsl::make_span(statements_);
+    }
+
+    void push_statement(statement* stmt)
+    {
+        statements_.push_back(stmt);
     }
 
 private:
