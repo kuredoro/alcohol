@@ -9,7 +9,7 @@ int main()
     x[0] = 1;
     x[1] = 3;
 
-    x = NULL;
+    x = 0;
 
     return 0;
 }
