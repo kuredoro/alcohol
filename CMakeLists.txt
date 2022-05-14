@@ -150,6 +150,8 @@ if (BUILD_PLUGIN)
     add_llvm_library(alcohol MODULE
         src/alc/plugin/AlcoholPluginAction.hpp
         src/alc/plugin/AlcoholPluginAction.cpp
+        src/alc/plugin/AftFuncDeclConsumer.hpp
+        src/alc/plugin/AftFuncDeclConsumer.cpp
         src/alc/plugin/Main.cpp
         PLUGIN_TOOL clang
     )
