@@ -6,10 +6,10 @@
 
 ast::expression* to_alc_expression(ast::manager& store, const Expr* expr)
 {
-    auto implicitCast = dyn_cast<ImplicitCastExpr>(expr);
-    if (implicitCast)
+    auto castExpr = dyn_cast<CastExpr>(expr);
+    if (castExpr)
     {
-        return to_alc_expression(store, implicitCast->getSubExpr());
+        return to_alc_expression(store, castExpr->getSubExpr());
     }
 
     auto intLit = dyn_cast<const IntegerLiteral>(expr);
@@ -84,10 +84,10 @@ void MatchVariableDeclarationCallback::run(const MatchFinder::MatchResult& resul
     auto& nodes = result.Nodes;
 
     auto varDecl = nodes.getNodeAs<VarDecl>("varDecl");
-    auto clangExpr = nodes.getNodeAs<Expr>("expr");
+    auto newValue = nodes.getNodeAs<Expr>("newValue");
 
     auto& store = visitor.ast_store();
-    auto alcExpr = to_alc_expression(store, clangExpr);
+    auto alcExpr = to_alc_expression(store, newValue);
 
     if (!alcExpr)
     {
@@ -99,4 +99,28 @@ void MatchVariableDeclarationCallback::run(const MatchFinder::MatchResult& resul
     auto decl = store.make_statement<ast::decl>(varDecl->getNameAsString(), alcExpr);
 
     visitor.push_statement(decl, {});
+}
+
+void MatchVariableAssignmentCallback::run(const MatchFinder::MatchResult& result)
+{
+    llvm::outs() << "Var assignment!\n";
+
+    auto& nodes = result.Nodes;
+
+    auto varDecl = nodes.getNodeAs<VarDecl>("varDecl");
+    auto newValue = nodes.getNodeAs<Expr>("newValue");
+
+    auto& store = visitor.ast_store();
+    auto alcExpr = to_alc_expression(store, newValue);
+
+    if (!alcExpr)
+    {
+        llvm::outs() << "Unsupported expression:\n";
+        varDecl->dump();
+        return;
+    }
+
+    auto assign = store.make_statement<ast::assign>(varDecl->getNameAsString(), alcExpr);
+
+    visitor.push_statement(assign, {});
 }
