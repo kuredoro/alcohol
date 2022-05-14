@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(alcohol VERSION 0.1.0 LANGUAGES CXX)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include(CTest)
@@ -146,19 +147,18 @@ if (BUILD_PLUGIN)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
     endif()
     
-    #add_library(alcohol SHARED
-    add_llvm_library(alcohol MODULE
+    add_library(alcohol SHARED
         src/alc/plugin/AlcoholPluginAction.hpp
         src/alc/plugin/AlcoholPluginAction.cpp
         src/alc/plugin/AftFuncDeclConsumer.hpp
         src/alc/plugin/AftFuncDeclConsumer.cpp
         src/alc/plugin/Main.cpp
-        PLUGIN_TOOL clang
     )
     
     target_link_libraries(alcohol PUBLIC
         ast_manager
         ast_statements
+        linter
 
         # Allow undefined symbols in shared objects on Darwin (this is the default
         # behaviour on Linux)
