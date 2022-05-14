@@ -101,7 +101,7 @@ struct linter_visitor : public ast::statement_visitor
         {
             stmt->accept(*this);
 
-            spdlog::info("\n  {}{}\n", stmt->to_string(), linter_.cnf_.to_string());
+            spdlog::debug("\n  {}{}\n", stmt->to_string(), linter_.cnf_.to_string());
         }
     }
 
@@ -139,6 +139,7 @@ struct linter_visitor : public ast::statement_visitor
         auto reachable = linter_.cnf_.check_reachability_from(linter_.astStore_, assignment.destination(), assignment.value());
         if (!reachable)
         {
+            linter_.diagnostics_.emplace_back(&assignment, diagnostic::type::memory_leak);
             spdlog::debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Memory leak detected");
         }
         
@@ -187,6 +188,7 @@ struct linter_visitor : public ast::statement_visitor
         bool removed = linter_.cnf_.remove_var(dispose.target_var());
         if (!removed)
         {
+            linter_.diagnostics_.emplace_back(&dispose, diagnostic::type::double_free);
             spdlog::debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Double free of {}", dispose.target_var()->name());
         }
     }
@@ -209,19 +211,19 @@ void linter::process(ast::block& block)
 {
     block.accept(exprStat_);
 
-    spdlog::info("ADDR VARS: ");
+    spdlog::debug("ADDR VARS: ");
     for (auto& v : exprStat_.address_variables())
     {
-        spdlog::info("{}", v->to_string());
+        spdlog::debug("{}", v->to_string());
     }
 
-    spdlog::info("ADDR EXPRS: ");
+    spdlog::debug("ADDR EXPRS: ");
     for (auto& e : exprStat_.address_expressions())
     {
-        spdlog::info("{}", e->to_string());
+        spdlog::debug("{}", e->to_string());
     }
 
-    spdlog::info("-----");
+    spdlog::debug("-----");
 
     linter_visitor v(*this);
     block.accept(v);
