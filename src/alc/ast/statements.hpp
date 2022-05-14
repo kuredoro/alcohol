@@ -137,6 +137,11 @@ struct store final : public visitable_statement<store>
         value_(store.acquire_expression(std::forward<RHS>(value)))
     {}
 
+    store(manager& store, expression* address, expression* value) :
+        destination_(address),
+        value_(value)
+    {}
+
     std::string to_string() const override
     {
         return "*" + destination_->to_string() + " := " + value_->to_string() + "\n";
