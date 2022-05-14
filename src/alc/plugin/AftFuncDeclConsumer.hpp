@@ -65,19 +65,29 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
   {
     matcher_ = std::make_unique<MatchFinder>();  
 
+    auto mallocPattern =
+        callExpr(
+            hasDeclaration(functionDecl(
+                hasName("malloc")
+            )),
+            hasArgument(0, binaryOperator(
+                hasDescendant(integerLiteral().bind("size"))
+            ))
+        );
+
     allocCb_ = std::make_unique<MatchMemoryAllocationCallback>(*this);
-    auto allocPattern =
+    auto allocDeclPattern =
         declStmt(
             hasSingleDecl(varDecl(
-                hasDescendant(callExpr(
-                    hasDeclaration(functionDecl(
-                        hasName("malloc")
-                    )),
-                    hasArgument(0, binaryOperator(
-                        hasDescendant(integerLiteral().bind("size"))
-                    ))
-                ))
+                hasDescendant(mallocPattern)
             ).bind("decl"))
+        );
+
+    auto allocAssignPattern =
+        binaryOperator(
+            isAssignmentOperator(),
+            hasLHS(declRefExpr(hasDeclaration(varDecl().bind("decl")))),
+            hasRHS(hasDescendant(mallocPattern))
         );
 
     deallocCb_ = std::make_unique<MatchMemoryDeallocationCallback>(*this);
@@ -88,7 +98,8 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
             ))
         );
 
-    matcher_->addMatcher(allocPattern, allocCb_.get());
+    matcher_->addMatcher(allocDeclPattern, allocCb_.get());
+    matcher_->addMatcher(allocAssignPattern, allocCb_.get());
     matcher_->addMatcher(deallocPattern, deallocCb_.get());
   }
 
