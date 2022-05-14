@@ -137,7 +137,7 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
     auto varDeclPattern =
         declStmt(
             hasSingleDecl(varDecl(
-                hasInitializer(expr().bind("newValue"))
+                hasInitializer(newValuePattern("newValue"))
             ).bind("varDecl"))
         );
 
