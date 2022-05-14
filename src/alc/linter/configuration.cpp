@@ -54,14 +54,12 @@ std::vector<ast::expression*> configuration::current_address_exprs(ast::manager&
 
     for (size_t i = 0; i < allExprs.size(); i++)
     {
-        if (allExprs[i] == nullptr)
-            continue;
-
         for (size_t j = i + 1; j < allExprs.size(); j++)
         {
             if (store.same(allExprs[i], allExprs[j]))
             {
-                allExprs[j] = nullptr;
+                allExprs[i] = nullptr;
+                break;
             }
         }
     }
