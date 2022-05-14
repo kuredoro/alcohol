@@ -123,6 +123,12 @@ void MatchStoreCallback::run(const MatchFinder::MatchResult& result)
 
     ast::expression* destVar = store.make_expression<ast::var>(varDecl->getNameAsString());
     ast::expression* place = store.make_expression<ast::add>(destVar, alcIndex);
+
+    if (auto intIndex = dynamic_cast<ast::integer*>(alcIndex); intIndex && intIndex->value() == 0)
+    {
+        place = destVar;
+    }
+
     auto storeStmt = store.make_statement<ast::store>(place, alcValue);
 
     visitor.push_statement(storeStmt, {});
