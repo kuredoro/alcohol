@@ -14,9 +14,11 @@
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendPluginRegistry.h>
+#include <gsl/gsl-lite.hpp>
 #include <llvm/Support/raw_ostream.h>
 
 #include <alc/ast/statements.hpp>
+#include <alc/ast/manager.hpp>
 
 #include <memory>
 #include <type_traits>
@@ -24,21 +26,33 @@
 using namespace clang;
 using namespace ast_matchers;
 
-struct MatchMemoryAllocationCallback : public MatchFinder::MatchCallback
+struct AftFuncDeclVisitor;
+
+struct MatchCallbackWithVisitor : public MatchFinder::MatchCallback
 {
-    void run(const MatchFinder::MatchResult& result) override
-    {
-        llvm::outs() << "Memory alloc!\n";
-    }
+    AftFuncDeclVisitor& visitor;
+
+    MatchCallbackWithVisitor(AftFuncDeclVisitor& visitor) : visitor(visitor) {}
+    MatchCallbackWithVisitor(const MatchCallbackWithVisitor&) = default;
+    MatchCallbackWithVisitor(MatchCallbackWithVisitor&&) = default;
 };
 
-struct MatchPointerMutationCallback : public MatchFinder::MatchCallback
+struct MatchMemoryAllocationCallback : public MatchCallbackWithVisitor
+{
+    MatchMemoryAllocationCallback(AftFuncDeclVisitor& v) : MatchCallbackWithVisitor(v) {}
+
+    void run(const MatchFinder::MatchResult& result) override;
+};
+
+struct MatchPointerMutationCallback : public MatchCallbackWithVisitor
 {
     void run(const MatchFinder::MatchResult& result) override;
 };
 
-struct MatchMemoryDeallocationCallback : public MatchFinder::MatchCallback
+struct MatchMemoryDeallocationCallback : public MatchCallbackWithVisitor
 {
+    MatchMemoryDeallocationCallback(AftFuncDeclVisitor& v) : MatchCallbackWithVisitor(v) {}
+
     void run(const MatchFinder::MatchResult& result) override
     {
         llvm::outs() << "Memory free!\n";
@@ -51,19 +65,22 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
   {
     matcher_ = std::make_unique<MatchFinder>();  
 
-    allocCb_ = std::make_unique<MatchMemoryAllocationCallback>();
+    allocCb_ = std::make_unique<MatchMemoryAllocationCallback>(*this);
     auto allocPattern =
         declStmt(
             hasSingleDecl(varDecl(
                 hasDescendant(callExpr(
                     hasDeclaration(functionDecl(
                         hasName("malloc")
+                    )),
+                    hasArgument(0, binaryOperator(
+                        hasDescendant(integerLiteral().bind("size"))
                     ))
                 ))
-            ))
+            ).bind("decl"))
         );
 
-    deallocCb_ = std::make_unique<MatchMemoryDeallocationCallback>();
+    deallocCb_ = std::make_unique<MatchMemoryDeallocationCallback>(*this);
     auto deallocPattern =
         callExpr(
             hasDeclaration(functionDecl(
@@ -75,8 +92,6 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
     matcher_->addMatcher(deallocPattern, deallocCb_.get());
   }
 
-  void push_statement(ast::statement* stmt, clang::SourceLocation at);
-
   bool TraverseFunctionDecl(const clang::FunctionDecl* funcDecl)
   {
     llvm::outs() << "Func!!!\n";
@@ -86,7 +101,13 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
       return true;
     }
 
-    return TraverseCompoundStmt(body);
+    TraverseCompoundStmt(body);
+
+    auto block = store_.make_statement<ast::block>(gsl::make_span(mainStatements_));
+
+    llvm::outs() << "Program:\n" << block->to_string() << '\n';
+
+    return true;
   }
   
   bool TraverseCompoundStmt(const CompoundStmt* stmts)
@@ -101,18 +122,39 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
     return true;
   }
 
+  ast::manager& ast_store()
+  {
+      return store_;
+  }
+
+  void push_statement(ast::statement* stmt, clang::SourceLocation at)
+  {
+      mainStatements_.push_back(stmt);
+  }
+
 private:
   std::unique_ptr<MatchFinder> matcher_;
   //std::unique_ptr<MatchFinder::MatchCallback> m_dataDeclCb, m_ptrDeclCb;
-  std::unique_ptr<MatchFinder::MatchCallback> allocCb_, deallocCb_;
+  std::unique_ptr<MatchCallbackWithVisitor> allocCb_, deallocCb_;
+
+  ast::manager store_;
+  std::vector<ast::statement*> mainStatements_;
 
   const ASTContext* ctx_;
   const SourceManager& sm_;
 };
 
-/*
 void MatchMemoryAllocationCallback::run(const MatchFinder::MatchResult& result)
 {
     llvm::outs() << "Memory alloc!\n";
+
+    auto& nodes = result.Nodes;
+
+    auto decl = nodes.getNodeAs<VarDecl>("decl");
+    auto size = nodes.getNodeAs<IntegerLiteral>("size");
+
+    auto& store = visitor.ast_store();
+    auto alloc = store.make_statement<ast::alloc>(decl->getNameAsString(), size->getValue().getZExtValue());
+
+    visitor.push_statement(alloc, {});
 }
-*/
