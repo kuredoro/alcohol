@@ -56,6 +56,13 @@ struct MatchMemoryDeallocationCallback : public MatchCallbackWithVisitor
     void run(const MatchFinder::MatchResult& result) override;
 };
 
+struct MatchVariableDeclarationCallback : public MatchCallbackWithVisitor
+{
+    MatchVariableDeclarationCallback(AftFuncDeclVisitor& v) : MatchCallbackWithVisitor(v) {}
+
+    void run(const MatchFinder::MatchResult& result) override;
+};
+
 struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor>
 {
   explicit AftFuncDeclVisitor(const clang::ASTContext* ctx) : ctx_(ctx), sm_(ctx->getSourceManager())
@@ -96,9 +103,20 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
             hasArgument(0, declRefExpr(hasDeclaration(varDecl().bind("varDecl"))))
         );
 
+    declCb_ = std::make_unique<MatchVariableDeclarationCallback>(*this);
+    auto varDeclPattern =
+        declStmt(
+            hasSingleDecl(varDecl(
+                hasInitializer(expr().bind("expr"))
+            ).bind("varDecl"))
+        );
+
     matcher_->addMatcher(allocDeclPattern, allocCb_.get());
     matcher_->addMatcher(allocAssignPattern, allocCb_.get());
+
     matcher_->addMatcher(deallocPattern, deallocCb_.get());
+
+    matcher_->addMatcher(varDeclPattern, declCb_.get());
   }
 
   bool TraverseFunctionDecl(const clang::FunctionDecl* funcDecl)
@@ -125,7 +143,6 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
     {
       matcher_->match(*stmt, *const_cast<ASTContext*>(ctx_));
       llvm::outs() << "STMT\n";
-      //TraverseStmt(stmt);
     }
 
     return true;
@@ -144,7 +161,7 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
 private:
   std::unique_ptr<MatchFinder> matcher_;
   //std::unique_ptr<MatchFinder::MatchCallback> m_dataDeclCb, m_ptrDeclCb;
-  std::unique_ptr<MatchCallbackWithVisitor> allocCb_, deallocCb_;
+  std::unique_ptr<MatchCallbackWithVisitor> allocCb_, deallocCb_, declCb_;
 
   ast::manager store_;
   std::vector<ast::statement*> mainStatements_;
