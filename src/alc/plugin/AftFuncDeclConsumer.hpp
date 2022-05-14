@@ -19,6 +19,7 @@
 
 #include <alc/ast/statements.hpp>
 #include <alc/ast/manager.hpp>
+#include <alc/linter/linter.hpp>
 
 #include <memory>
 #include <type_traits>
@@ -173,7 +174,6 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
 
   bool TraverseFunctionDecl(const clang::FunctionDecl* funcDecl)
   {
-    llvm::outs() << "Func!!!\n";
     auto body = dyn_cast<CompoundStmt>(funcDecl->getBody());
     if (!body)
     {
@@ -186,6 +186,33 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
 
     llvm::outs() << "Program:\n" << block->to_string() << '\n';
 
+    linter::linter linter(store_);
+    linter.process(*block);
+
+    // Register custom diagnostic messages
+    auto& diag = ctx_->getDiagnostics();
+    auto diagWarnLeak = diag.getCustomDiagID(
+        DiagnosticsEngine::Warning,
+        "possible memory leak");
+
+    auto diagWarnDoubleFree = diag.getCustomDiagID(
+        DiagnosticsEngine::Warning,
+        "possible double free");
+
+    // Emit warnings
+    auto diagnostics = linter.diagnostics();
+    for (auto& issue : diagnostics)
+    {
+        if (issue.type == linter::diagnostic::type::memory_leak)
+        {
+            diag.Report(astMap_[issue.ref], diagWarnLeak);
+        }
+        else if (issue.type == linter::diagnostic::type::double_free)
+        {
+            diag.Report(astMap_[issue.ref], diagWarnDoubleFree);
+        }
+    }
+
     return true;
   }
   
@@ -194,7 +221,6 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
     for (auto* stmt : stmts->body())
     {
       matcher_->match(*stmt, *const_cast<ASTContext*>(ctx_));
-      llvm::outs() << "STMT\n";
     }
 
     return true;
@@ -208,6 +234,7 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
   void push_statement(ast::statement* stmt, clang::SourceLocation at)
   {
       mainStatements_.push_back(stmt);
+      astMap_[stmt] = at;
   }
 
 private:
@@ -217,6 +244,7 @@ private:
 
   ast::manager store_;
   std::vector<ast::statement*> mainStatements_;
+  std::map<ast::statement*, clang::SourceLocation> astMap_;
 
   const ASTContext* ctx_;
   const SourceManager& sm_;
