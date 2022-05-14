@@ -44,11 +44,6 @@ struct MatchMemoryAllocationCallback : public MatchCallbackWithVisitor
     void run(const MatchFinder::MatchResult& result) override;
 };
 
-struct MatchPointerMutationCallback : public MatchCallbackWithVisitor
-{
-    void run(const MatchFinder::MatchResult& result) override;
-};
-
 struct MatchMemoryDeallocationCallback : public MatchCallbackWithVisitor
 {
     MatchMemoryDeallocationCallback(AftFuncDeclVisitor& v) : MatchCallbackWithVisitor(v) {}
@@ -62,6 +57,14 @@ struct MatchVariableDeclarationCallback : public MatchCallbackWithVisitor
 
     void run(const MatchFinder::MatchResult& result) override;
 };
+
+struct MatchVariableAssignmentCallback : public MatchCallbackWithVisitor
+{
+    MatchVariableAssignmentCallback(AftFuncDeclVisitor& v) : MatchCallbackWithVisitor(v) {}
+
+    void run(const MatchFinder::MatchResult& result) override;
+};
+
 
 struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor>
 {
@@ -79,6 +82,8 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
             ))
         );
 
+    // ---
+
     allocCb_ = std::make_unique<MatchMemoryAllocationCallback>(*this);
     auto allocDeclPattern =
         declStmt(
@@ -93,6 +98,11 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
             hasLHS(declRefExpr(hasDeclaration(varDecl().bind("varDecl")))),
             hasRHS(hasDescendant(mallocPattern))
         );
+    // TODO: find out if the order of `addMatcher` specifies the matcher priorities...
+    matcher_->addMatcher(allocDeclPattern, allocCb_.get());
+    matcher_->addMatcher(allocAssignPattern, allocCb_.get());
+
+    // ---
 
     deallocCb_ = std::make_unique<MatchMemoryDeallocationCallback>(*this);
     auto deallocPattern =
@@ -103,20 +113,35 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
             hasArgument(0, declRefExpr(hasDeclaration(varDecl().bind("varDecl"))))
         );
 
+    matcher_->addMatcher(deallocPattern, deallocCb_.get());
+
+    // ---
+
     declCb_ = std::make_unique<MatchVariableDeclarationCallback>(*this);
     auto varDeclPattern =
         declStmt(
             hasSingleDecl(varDecl(
-                hasInitializer(expr().bind("expr"))
+                hasInitializer(expr().bind("newValue"))
             ).bind("varDecl"))
         );
 
-    matcher_->addMatcher(allocDeclPattern, allocCb_.get());
-    matcher_->addMatcher(allocAssignPattern, allocCb_.get());
-
-    matcher_->addMatcher(deallocPattern, deallocCb_.get());
-
     matcher_->addMatcher(varDeclPattern, declCb_.get());
+
+    // ---
+
+    varAssignCb_ = std::make_unique<MatchVariableAssignmentCallback>(*this);
+    auto varAssignPattern =
+        binaryOperator(
+            isAssignmentOperator(),
+            hasLHS(declRefExpr(hasDeclaration(varDecl().bind("varDecl")))),
+            hasRHS(anyOf(
+                integerLiteral().bind("newValue"),
+                binaryOperator().bind("newValue"),
+                hasDescendant(declRefExpr(hasDeclaration(varDecl())).bind("newValue"))
+            ))
+        );
+
+    matcher_->addMatcher(varAssignPattern, varAssignCb_.get());
   }
 
   bool TraverseFunctionDecl(const clang::FunctionDecl* funcDecl)
@@ -161,7 +186,7 @@ struct AftFuncDeclVisitor : public clang::RecursiveASTVisitor<AftFuncDeclVisitor
 private:
   std::unique_ptr<MatchFinder> matcher_;
   //std::unique_ptr<MatchFinder::MatchCallback> m_dataDeclCb, m_ptrDeclCb;
-  std::unique_ptr<MatchCallbackWithVisitor> allocCb_, deallocCb_, declCb_;
+  std::unique_ptr<MatchCallbackWithVisitor> allocCb_, deallocCb_, declCb_, varAssignCb_;
 
   ast::manager store_;
   std::vector<ast::statement*> mainStatements_;
