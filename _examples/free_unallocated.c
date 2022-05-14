@@ -2,7 +2,7 @@
 
 int main()
 {
-    int* x = NULL;
+    int* x = 0;
     free(x);
 
     return 0;

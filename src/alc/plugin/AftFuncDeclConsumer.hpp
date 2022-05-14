@@ -76,7 +76,7 @@ inline auto newValuePattern(std::string bindAs)
 {
     return 
         anyOf(
-            integerLiteral().bind(bindAs),
+            ignoringParenImpCasts(integerLiteral().bind(bindAs)),
             binaryOperator().bind(bindAs),
             hasDescendant(declRefExpr(hasDeclaration(varDecl())).bind(bindAs))
         );

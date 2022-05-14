@@ -2,7 +2,8 @@
 
 int main()
 {
-    int *x = 0, *y = 0;
+    int *x = 0;
+    int *y = 0;
     x = (int*)malloc(2 * sizeof(int));
     if (!x)
         return 1;
@@ -12,7 +13,7 @@ int main()
 
     y = x;
 
-    x = NULL;
+    x = 0;
 
     free(y);
 
