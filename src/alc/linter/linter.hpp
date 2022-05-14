@@ -13,13 +13,28 @@
 namespace linter
 {
 
+struct diagnostic
+{
+    enum class type
+    {
+        memory_leak, double_free
+    };
+
+    diagnostic(ast::statement* ref, type type) :
+        ref(ref), type(type)
+    {}
+
+    ast::statement* ref;
+    type type;
+};
+
 struct linter
 {
     explicit linter(ast::manager& store) :
         astStore_(store), exprStat_(store)
     {}
 
-    const std::vector<std::string>& warnings() const
+    gsl::span<const diagnostic> diagnostics() const
     {
         return diagnostics_;
     }
@@ -28,7 +43,7 @@ struct linter
 
 private:
     ast::manager& astStore_;
-    std::vector<std::string> diagnostics_;
+    std::vector<diagnostic> diagnostics_;
     address_expr_collector exprStat_;
 
     // Our only configuration for now
