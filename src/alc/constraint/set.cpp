@@ -26,6 +26,33 @@ void set::add(ast::constraint* expr)
     constraints_.push_back(expr);
 }
 
+void set::remove_duplicates(ast::manager& store)
+{
+    for (size_t i = 0; i < constraints_.size(); i++)
+    {
+        for (size_t j = i + 1; j < constraints_.size(); j++)
+        {
+            if (store.same(constraints_[i], constraints_[j]))
+            {
+                constraints_[i] = nullptr;
+                break;
+            }
+        }
+    }
+
+    size_t out = 0;
+    for (size_t in = 0; in < constraints_.size(); in++)
+    {
+        if (constraints_[in] == nullptr)
+            continue;
+
+        constraints_[out] = constraints_[in];
+        out++;
+    }
+
+    constraints_.resize(out);
+}
+
 bool set::check_consistency() const
 {
     z3::context ctx;

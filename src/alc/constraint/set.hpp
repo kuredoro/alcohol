@@ -1,5 +1,6 @@
 #pragma once
 
+#include <alc/ast/manager.hpp>
 #include <alc/ast/expressions.hpp>
 
 #include <z3++.h>
@@ -13,6 +14,8 @@ namespace constraint
 struct set
 {
     void add(ast::constraint*);
+    void remove_duplicates(ast::manager&);
+
     bool check_satisfiability_of(ast::constraint*) const;
     bool check_consistency() const;
 
