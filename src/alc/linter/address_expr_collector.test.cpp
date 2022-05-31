@@ -414,6 +414,27 @@ int main()
                 store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 1)),
             },
         },
+        {
+            "double_assignment_does_not_produce_duplicates",
+            store.make_statement<ast::block>(
+                ast::alloc(store, "x", 2),
+                ast::assign(store, "x", ast::integer(store, 2)),
+                ast::assign(store, "x", ast::integer(store, 2)),
+                ast::decl(store, "y", ast::var(store, "x")),
+                ast::assign(store, "y", ast::var(store, "x"))
+            ),
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::var>("y"),
+            },
+            {
+                store.make_expression<ast::var>("x"),
+                store.make_expression<ast::add>(ast::var(store, "x"), ast::integer(store, 1)),
+                store.make_expression<ast::var>("y"),
+                store.make_expression<ast::add>(ast::var(store, "y"), ast::integer(store, 1)),
+                store.make_expression<ast::integer>(2),
+            },
+        },
     };
 
     std::vector<test_case> smallPrograms{
