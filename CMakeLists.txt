@@ -57,6 +57,13 @@ target_link_libraries(ast_collect_vars PUBLIC
     ast_expressions
 )
 
+add_component(ast_simplify_arithmetic src/alc/ast/simplify_arithmetic)
+target_link_libraries(ast_simplify_arithmetic PUBLIC
+    CONAN_PKG::boost
+    ast_manager
+    ast_expressions
+)
+
 add_component(ast_statements src/alc/ast/statements)
 target_link_libraries(ast_statements PUBLIC
     CONAN_PKG::gsl-lite
@@ -99,6 +106,7 @@ target_link_libraries(linter PUBLIC
     ast_statements
     ast_expressions
     ast_replace_var
+    ast_simplify_arithmetic
     address_expr_collector
     linter_configuration
 )
