@@ -61,31 +61,30 @@ constraint::set infer_after_replacement(ast::manager& store, const constraint::s
                 continue;
             }
 
+            auto neq = store.make_expression<ast::constraint>(
+                ast::constraint::relation::neq, e1Replaced, e2Replaced
+            );
+
+            bool valid = constraints.check_satisfiability_of(neq);
+            spdlog::trace("      Trying to prove {} :: {}", neq->to_string(), valid);
+            if (valid)
+            {
+                newSet.add(store.make_expression<ast::constraint>(
+                    ast::constraint::relation::neq, e1, e2
+                ));
+                continue;
+            }
+
             auto eq = store.make_expression<ast::constraint>(
                 ast::constraint::relation::eq, e1Replaced, e2Replaced
             );
 
-            bool valid = constraints.check_satisfiability_of(eq);
+            valid = constraints.check_satisfiability_of(eq);
             spdlog::trace("      Trying to prove {} :: {}", eq->to_string(), valid);
             if (valid)
             {
                 newSet.add(store.make_expression<ast::constraint>(
                     ast::constraint::relation::eq, e1, e2
-                ));
-                continue;
-            }
-
-            auto neq = store.make_expression<ast::constraint>(
-                ast::constraint::relation::neq, e1Replaced, e2Replaced
-            );
-
-            valid = constraints.check_satisfiability_of(neq);
-            spdlog::trace("      Trying to prove {} :: {}", neq->to_string(), valid);
-
-            if (valid)
-            {
-                newSet.add(store.make_expression<ast::constraint>(
-                    ast::constraint::relation::neq, e1, e2
                 ));
                 continue;
             }
