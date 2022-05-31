@@ -68,8 +68,8 @@ struct add final : public visitable_expression<add>
     template <
         class LHS,
         class RHS,
-        bool = mp_if_c<!std::is_pointer_v<LHS>, mp_true, void>::value,
-        bool = mp_if_c<!std::is_pointer_v<RHS>, mp_true, void>::value
+        bool = mp_if_c<!std::is_pointer_v<std::remove_cvref_t<LHS>>, mp_true, void>::value,
+        bool = mp_if_c<!std::is_pointer_v<std::remove_cvref_t<RHS>>, mp_true, void>::value
     >
     add(manager& store, LHS&& left, RHS&& right) :
         left_(store.acquire_expression(std::forward<LHS>(left))),
