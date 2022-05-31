@@ -81,7 +81,7 @@ void address_expr_collector::process(ast::assign& assignment)
     {
         if (addrVar->name() == dest->name())
         {
-            addrExprs_.push_back(assignment.value());
+            push_back_if_absent(astStore_, addrExprs_, assignment.value());
             break;
         }
     }
@@ -94,7 +94,7 @@ void address_expr_collector::process(ast::assign& assignment)
         for (size_t i = 1; i < sourceVarAllocSize; i++)
         {
             auto root = astStore_.make_expression<ast::add>(ast::var(astStore_, assignment.destination()->name()), ast::integer(astStore_, i));
-            addrExprs_.push_back(root);
+            push_back_if_absent(astStore_, addrExprs_, root);
         }
     }
 
