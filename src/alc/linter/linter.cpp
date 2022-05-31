@@ -1,3 +1,4 @@
+#include "alc/constraint/is_trivial.hpp"
 #include <alc/ast/collect_vars.hpp>
 #include <alc/ast/expressions.hpp>
 #include <alc/ast/manager.hpp>
@@ -51,57 +52,12 @@ constraint::set infer_after_replacement(ast::manager& store, const constraint::s
             auto e1Replaced = ast::simplify_arithmetic(store, ast::replace_var(store, e1, from, to));
             auto e2Replaced = ast::simplify_arithmetic(store, ast::replace_var(store, e2, from, to));
 
-            if (store.same(e1Replaced, e2Replaced))
+            auto trivialRel = constraint::is_trivial(store, e1Replaced, e2Replaced);
+            if (trivialRel)
             {
                 newSet.add(store.make_expression<ast::constraint>(
-                    ast::constraint::relation::eq, e1, e2
+                    *trivialRel, e1, e2
                 ));
-                continue;
-            }
-
-            auto e1ReplacedAsSum = dynamic_cast<ast::add*>(e1Replaced);
-            auto e2ReplacedAsSum = dynamic_cast<ast::add*>(e2Replaced);
-            if (e1ReplacedAsSum != nullptr && e2ReplacedAsSum != nullptr)
-            {
-                if (store.same(e1ReplacedAsSum->left(), e2ReplacedAsSum->left()))
-                {
-                    auto e1ReplacedOffset = dynamic_cast<ast::integer*>(e1ReplacedAsSum);
-                    auto e2ReplacedOffset = dynamic_cast<ast::integer*>(e2ReplacedAsSum);
-
-                    if (e1ReplacedOffset != nullptr && e2ReplacedOffset != nullptr && store.same(e1ReplacedOffset, e2ReplacedOffset))
-                    {
-                        newSet.add(store.make_expression<ast::constraint>(
-                            ast::constraint::relation::eq, e1, e2
-                        ));
-                    }
-                    else
-                    {
-                        newSet.add(store.make_expression<ast::constraint>(
-                            ast::constraint::relation::neq, e1, e2
-                        ));
-                    }
-
-                    continue;
-                }
-            }
-
-            auto e1ReplacedAsInt = dynamic_cast<ast::integer*>(e1Replaced);
-            auto e2ReplacedAsInt = dynamic_cast<ast::integer*>(e2Replaced);
-            if (e1ReplacedAsInt != nullptr && e2ReplacedAsInt != nullptr)
-            {
-                if (e1ReplacedAsInt->value() == e2ReplacedAsInt->value())
-                {
-                    newSet.add(store.make_expression<ast::constraint>(
-                        ast::constraint::relation::eq, e1, e2
-                    ));
-                }
-                else
-                {
-                    newSet.add(store.make_expression<ast::constraint>(
-                        ast::constraint::relation::neq, e1, e2
-                    ));
-                }
-
                 continue;
             }
 
