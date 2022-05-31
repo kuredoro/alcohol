@@ -77,6 +77,15 @@ add_component(constraint_set src/alc/constraint/set)
 target_link_libraries(constraint_set PUBLIC
     CONAN_PKG::gsl-lite
     CONAN_PKG::z3
+    ast_manager
+    ast_expressions
+)
+
+add_component(constraint_is_trivial src/alc/constraint/is_trivial)
+target_link_libraries(constraint_set PUBLIC
+    CONAN_PKG::gsl-lite
+    CONAN_PKG::z3
+    ast_manager
     ast_expressions
 )
 
@@ -97,6 +106,7 @@ target_link_libraries(linter_configuration PUBLIC
     ast_has_var
     ast_replace_var
     constraint_set
+    constraint_is_trivial
 )
 
 add_component(linter src/alc/linter/linter)
@@ -107,6 +117,7 @@ target_link_libraries(linter PUBLIC
     ast_expressions
     ast_replace_var
     ast_simplify_arithmetic
+    constraint_is_trivial
     address_expr_collector
     linter_configuration
 )
