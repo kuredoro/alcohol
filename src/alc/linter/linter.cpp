@@ -81,6 +81,7 @@ constraint::set infer_after_replacement(ast::manager& store, const constraint::s
         }
     }
 
+    newSet.remove_duplicates(store);
     return newSet;
 }
 
@@ -161,8 +162,10 @@ struct linter_visitor : public ast::statement_visitor
         static size_t tmpCount = 1;
         auto tmpVar = linter_.astStore_.make_expression<ast::var>("@" + std::to_string(tmpCount++));
 
+        /*
         auto augmentedConstraints = linter_.cnf_;
         augmentedConstraints.add_array_constraints_for(linter_.astStore_, tmpVar, alloc.alloc_size());
+        */
 
         auto addrExprs = filter_expressions_with_vars(linter_.exprStat_.address_expressions(), linter_.cnf_.current_vars());
         auto newSet = infer_after_replacement(linter_.astStore_, linter_.cnf_.constraints(), addrExprs, alloc.destination_var(), tmpVar);
