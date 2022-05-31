@@ -82,9 +82,8 @@ target_link_libraries(constraint_set PUBLIC
 )
 
 add_component(constraint_is_trivial src/alc/constraint/is_trivial)
-target_link_libraries(constraint_set PUBLIC
-    CONAN_PKG::gsl-lite
-    CONAN_PKG::z3
+target_link_libraries(constraint_is_trivial PUBLIC
+    CONAN_PKG::boost
     ast_manager
     ast_expressions
 )
