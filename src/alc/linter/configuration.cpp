@@ -1,4 +1,6 @@
+#include "alc/ast/simplify_arithmetic.hpp"
 #include <alc/constraint/set.hpp>
+#include <alc/constraint/is_trivial.hpp>
 #include <alc/ast/manager.hpp>
 #include <alc/ast/expressions.hpp>
 #include <alc/ast/replace_var.hpp>
@@ -86,7 +88,20 @@ bool configuration::check_reachability_from(ast::manager& store, ast::var* from,
         bool reachable = false;
         for (auto& e2 : currentExprs)
         {
-            auto e2Replaced = ast::replace_var(store, e2, from, to);
+            auto e1Simple = ast::simplify_arithmetic(store, e1);
+            auto e2Replaced = ast::simplify_arithmetic(store, ast::replace_var(store, e2, from, to));
+
+            auto trivialRel = constraint::is_trivial(store, e1, e2Replaced);
+            if (trivialRel)
+            {
+                reachable = (*trivialRel == ast::constraint::relation::eq);
+
+                if (reachable)
+                    break;
+
+                continue;
+            }
+
             auto eq = store.make_expression<ast::constraint>(
                 ast::constraint::relation::eq, e1, e2Replaced
             );
